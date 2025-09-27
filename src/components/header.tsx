@@ -1,6 +1,12 @@
-import { Bell, Settings, User, Home, Plus, ShoppingCart } from "lucide-react";
+import { useState } from "react";
+import { Bell, Settings, User, Home, Plus, ShoppingCart, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link, useLocation } from "react-router-dom";
 
 interface HeaderProps {
@@ -10,6 +16,35 @@ interface HeaderProps {
 const Header = ({ notificationCount = 0 }: HeaderProps) => {
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
+  
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+
+  // Mock notifications data
+  const notifications = [
+    {
+      id: 1,
+      title: "Café acabando!",
+      message: "Seu café deve acabar em 2 dias",
+      time: "2h atrás",
+      urgent: true
+    },
+    {
+      id: 2,
+      title: "Açúcar em falta",
+      message: "Restam apenas 1 dia de açúcar",
+      time: "4h atrás",
+      urgent: true
+    },
+    {
+      id: 3,
+      title: "Promoção encontrada",
+      message: "Arroz com 30% de desconto no Mercado X",
+      time: "6h atrás",
+      urgent: false
+    }
+  ];
   
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
@@ -69,20 +104,57 @@ const Header = ({ notificationCount = 0 }: HeaderProps) => {
           {/* Navigation actions */}
           <div className="flex items-center gap-2">
             {/* Notifications */}
-            <Button 
-              variant="ghost" 
-              size="sm"
-              className="relative"
-            >
-              <Bell className="w-5 h-5" />
-              {notificationCount > 0 && (
-                <Badge 
-                  className="absolute -top-1 -right-1 bg-urgent text-urgent-foreground text-xs min-w-5 h-5 flex items-center justify-center p-0"
+            <Sheet open={notificationsOpen} onOpenChange={setNotificationsOpen}>
+              <SheetTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="relative"
                 >
-                  {notificationCount > 9 ? "9+" : notificationCount}
-                </Badge>
-              )}
-            </Button>
+                  <Bell className="w-5 h-5" />
+                  {notificationCount > 0 && (
+                    <Badge 
+                      className="absolute -top-1 -right-1 bg-urgent text-urgent-foreground text-xs min-w-5 h-5 flex items-center justify-center p-0"
+                    >
+                      {notificationCount > 9 ? "9+" : notificationCount}
+                    </Badge>
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-80">
+                <SheetHeader>
+                  <SheetTitle className="flex items-center gap-2">
+                    <Bell className="w-5 h-5" />
+                    Notificações
+                  </SheetTitle>
+                </SheetHeader>
+                <div className="mt-6 space-y-4">
+                  {notifications.map((notification) => (
+                    <div 
+                      key={notification.id}
+                      className={`p-4 rounded-lg border ${
+                        notification.urgent ? 'border-urgent/20 bg-urgent/5' : 'border-border'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-sm">{notification.title}</h4>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {notification.message}
+                          </p>
+                          <span className="text-xs text-muted-foreground mt-2 block">
+                            {notification.time}
+                          </span>
+                        </div>
+                        {notification.urgent && (
+                          <Badge variant="destructive" className="ml-2">Urgente</Badge>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </SheetContent>
+            </Sheet>
 
             {/* Mobile shopping list */}
             <div className="md:hidden">
@@ -97,14 +169,120 @@ const Header = ({ notificationCount = 0 }: HeaderProps) => {
             </div>
 
             {/* Settings */}
-            <Button variant="ghost" size="sm">
-              <Settings className="w-5 h-5" />
-            </Button>
+            <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <Settings className="w-5 h-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-80">
+                <SheetHeader>
+                  <SheetTitle className="flex items-center gap-2">
+                    <Settings className="w-5 h-5" />
+                    Configurações
+                  </SheetTitle>
+                </SheetHeader>
+                <div className="mt-6 space-y-6">
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Notificações</h4>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="push-notifications">Notificações Push</Label>
+                      <Switch id="push-notifications" defaultChecked />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="email-notifications">E-mail</Label>
+                      <Switch id="email-notifications" />
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Compras</h4>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="auto-add">Adicionar automaticamente</Label>
+                      <Switch id="auto-add" defaultChecked />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="price-alerts">Alertas de preço</Label>
+                      <Switch id="price-alerts" defaultChecked />
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Aparência</h4>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="dark-mode">Modo escuro</Label>
+                      <Switch id="dark-mode" />
+                    </div>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
 
             {/* Profile */}
-            <Button variant="ghost" size="sm">
-              <User className="w-5 h-5" />
-            </Button>
+            <Sheet open={profileOpen} onOpenChange={setProfileOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <User className="w-5 h-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-80">
+                <SheetHeader>
+                  <SheetTitle className="flex items-center gap-2">
+                    <User className="w-5 h-5" />
+                    Perfil
+                  </SheetTitle>
+                </SheetHeader>
+                <div className="mt-6 space-y-6">
+                  <div className="flex items-center gap-4">
+                    <Avatar className="w-16 h-16">
+                      <AvatarImage src="" />
+                      <AvatarFallback className="text-lg">JD</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h3 className="font-medium">João da Silva</h3>
+                      <p className="text-sm text-muted-foreground">joao@email.com</p>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-3">
+                    <h4 className="font-medium">Estatísticas</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center p-3 bg-muted rounded-lg">
+                        <div className="text-2xl font-bold text-foreground">47</div>
+                        <div className="text-xs text-muted-foreground">Itens salvos</div>
+                      </div>
+                      <div className="text-center p-3 bg-muted rounded-lg">
+                        <div className="text-2xl font-bold text-foreground">R$ 247</div>
+                        <div className="text-xs text-muted-foreground">Economia mensal</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-3">
+                    <Button variant="outline" className="w-full justify-start">
+                      <User className="w-4 h-4 mr-2" />
+                      Editar perfil
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start">
+                      <Settings className="w-4 h-4 mr-2" />
+                      Preferências
+                    </Button>
+                    <Button variant="destructive" className="w-full justify-start">
+                      <X className="w-4 h-4 mr-2" />
+                      Sair
+                    </Button>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </div>
