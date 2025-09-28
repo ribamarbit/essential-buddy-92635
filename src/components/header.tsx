@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link, useLocation } from "react-router-dom";
+import { useTheme } from "@/hooks/useTheme";
 
 interface HeaderProps {
   notificationCount?: number;
@@ -38,6 +39,19 @@ const sidebarTabs = {
 const Header = ({ notificationCount = 0 }: HeaderProps) => {
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
+  const { isDark, toggleTheme } = useTheme();
+  
+  // Settings state
+  const [settings, setSettings] = useState({
+    pushNotifications: true,
+    emailNotifications: false,
+    autoAdd: true,
+    priceAlerts: true
+  });
+
+  const updateSetting = (key: string, value: boolean) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
+  };
   
   // Dynamic state management for sidebar tabs
   const [openSidebars, setOpenSidebars] = useState<Record<string, boolean>>({
@@ -216,11 +230,19 @@ const Header = ({ notificationCount = 0 }: HeaderProps) => {
                           <h4 className="font-medium">Notificações</h4>
                           <div className="flex items-center justify-between">
                             <Label htmlFor="push-notifications">Notificações Push</Label>
-                            <Switch id="push-notifications" defaultChecked />
+                            <Switch
+                              id="push-notifications"
+                              checked={settings.pushNotifications}
+                              onCheckedChange={(checked) => updateSetting('pushNotifications', checked)}
+                            />
                           </div>
                           <div className="flex items-center justify-between">
                             <Label htmlFor="email-notifications">E-mail</Label>
-                            <Switch id="email-notifications" />
+                            <Switch
+                              id="email-notifications"
+                              checked={settings.emailNotifications}
+                              onCheckedChange={(checked) => updateSetting('emailNotifications', checked)}
+                            />
                           </div>
                         </div>
 
@@ -230,11 +252,19 @@ const Header = ({ notificationCount = 0 }: HeaderProps) => {
                           <h4 className="font-medium">Compras</h4>
                           <div className="flex items-center justify-between">
                             <Label htmlFor="auto-add">Adicionar automaticamente</Label>
-                            <Switch id="auto-add" defaultChecked />
+                            <Switch
+                              id="auto-add"
+                              checked={settings.autoAdd}
+                              onCheckedChange={(checked) => updateSetting('autoAdd', checked)}
+                            />
                           </div>
                           <div className="flex items-center justify-between">
                             <Label htmlFor="price-alerts">Alertas de preço</Label>
-                            <Switch id="price-alerts" defaultChecked />
+                            <Switch
+                              id="price-alerts"
+                              checked={settings.priceAlerts}
+                              onCheckedChange={(checked) => updateSetting('priceAlerts', checked)}
+                            />
                           </div>
                         </div>
 
@@ -244,7 +274,11 @@ const Header = ({ notificationCount = 0 }: HeaderProps) => {
                           <h4 className="font-medium">Aparência</h4>
                           <div className="flex items-center justify-between">
                             <Label htmlFor="dark-mode">Modo escuro</Label>
-                            <Switch id="dark-mode" />
+                            <Switch
+                              id="dark-mode"
+                              checked={isDark}
+                              onCheckedChange={toggleTheme}
+                            />
                           </div>
                         </div>
                       </div>

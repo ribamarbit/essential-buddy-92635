@@ -7,6 +7,8 @@ import Dashboard from "./pages/Dashboard";
 import AddItems from "./pages/AddItems";
 import ShoppingListPage from "./pages/ShoppingListPage";
 import NotFound from "./pages/NotFound";
+import Header from "./components/header";
+import AccessibilityPanel from "./components/accessibility-panel";
 
 const queryClient = new QueryClient();
 
@@ -16,13 +18,17 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/add-items" element={<AddItems />} />
-          <Route path="/shopping-list" element={<ShoppingListPage />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <div className="min-h-screen bg-background">
+          <Header notificationCount={3} />
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/add-items" element={<AddItems />} />
+            <Route path="/shopping-list" element={<ShoppingListPage />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <AccessibilityPanel />
+        </div>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
