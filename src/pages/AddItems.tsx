@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import Header from "@/components/header";
 import { useToast } from "@/hooks/use-toast";
 
 const predefinedItems = [
@@ -76,8 +75,6 @@ const AddItems = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header notificationCount={0} />
-      
       <main className="container mx-auto px-4 py-8 space-y-8">
         {/* Header */}
         <div className="text-center space-y-2">

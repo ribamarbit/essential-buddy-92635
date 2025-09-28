@@ -1,5 +1,4 @@
 import { useState } from "react";
-import Header from "@/components/header";
 import DashboardStats from "@/components/dashboard-stats";
 import ItemCard from "@/components/item-card";
 import { useToast } from "@/hooks/use-toast";
@@ -132,8 +131,6 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header notificationCount={stats.itemsRunningOut} />
-      
       <main className="container mx-auto px-4 py-8 space-y-8">
         {/* Welcome section */}
         <div className="text-center space-y-2">

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import Header from "@/components/header";
 import ShoppingList from "@/components/shopping-list";
 import { useToast } from "@/hooks/use-toast";
 
@@ -62,8 +61,6 @@ const ShoppingListPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header notificationCount={urgentItems} />
-      
       <main className="container mx-auto px-4 py-8 space-y-8">
         {/* Header */}
         <div className="text-center space-y-2">

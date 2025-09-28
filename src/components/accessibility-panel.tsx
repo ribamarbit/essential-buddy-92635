@@ -31,6 +31,9 @@ const AccessibilityPanel = () => {
                 <Accessibility className="w-5 h-5" />
                 Acessibilidade
               </SheetTitle>
+              <div className="text-sm text-muted-foreground">
+                Configure as opções de acessibilidade para melhorar sua experiência
+              </div>
             </SheetHeader>
             
             <div className="mt-6 space-y-6">

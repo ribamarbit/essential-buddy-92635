@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "@/hooks/useTheme";
+import { SheetDescription } from "@/components/ui/sheet";
 
 interface HeaderProps {
   notificationCount?: number;
@@ -192,6 +193,11 @@ const Header = ({ notificationCount = 0 }: HeaderProps) => {
                         <IconComponent className="w-5 h-5" />
                         {tab.title}
                       </SheetTitle>
+                      <SheetDescription>
+                        {tab.id === 'notifications' && 'Veja suas notificações e alertas importantes'}
+                        {tab.id === 'settings' && 'Configure suas preferências do aplicativo'}
+                        {tab.id === 'profile' && 'Visualize e edite suas informações de perfil'}
+                      </SheetDescription>
                     </SheetHeader>
                     
                     {/* Notifications Content */}
