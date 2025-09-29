@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, Settings, User, Home, Plus, ShoppingCart, X } from "lucide-react";
+import { Bell, Settings, User, Home, Plus, ShoppingCart, X, Menu, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -161,16 +161,63 @@ const Header = ({ notificationCount = 0 }: HeaderProps) => {
 
           {/* Navigation actions */}
           <div className="flex items-center gap-2">
-            {/* Mobile shopping list */}
+            {/* Mobile menu */}
             <div className="md:hidden">
-              <Link to="/shopping-list">
-                <Button 
-                  variant={isActive("/shopping-list") ? "default" : "ghost"} 
-                  size="sm"
-                >
-                  <ShoppingCart className="w-5 h-5" />
-                </Button>
-              </Link>
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <Menu className="w-5 h-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-80">
+                  <SheetHeader>
+                    <SheetTitle>Menu de Navegação</SheetTitle>
+                    <SheetDescription>Navegue pelas funcionalidades do app</SheetDescription>
+                  </SheetHeader>
+                  
+                  <div className="mt-6 space-y-4">
+                    <Link to="/" className="w-full">
+                      <Button 
+                        variant={isActive("/") ? "default" : "ghost"} 
+                        className="w-full justify-start"
+                      >
+                        <Home className="w-4 h-4 mr-2" />
+                        Dashboard
+                      </Button>
+                    </Link>
+                    
+                    <Link to="/add-items" className="w-full">
+                      <Button 
+                        variant={isActive("/add-items") ? "default" : "ghost"} 
+                        className="w-full justify-start"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Cadastrar Itens
+                      </Button>
+                    </Link>
+                    
+                    <Link to="/products" className="w-full">
+                      <Button 
+                        variant={isActive("/products") ? "default" : "ghost"} 
+                        className="w-full justify-start"
+                      >
+                        <Package className="w-4 h-4 mr-2" />
+                        Produtos
+                      </Button>
+                    </Link>
+                    
+                    <Link to="/shopping-list" className="w-full">
+                      <Button 
+                        variant={isActive("/shopping-list") ? "default" : "ghost"} 
+                        className="w-full justify-start"
+                      >
+                        <ShoppingCart className="w-4 h-4 mr-2" />
+                        Lista de Compras
+                      </Button>
+                    </Link>
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
 
             {/* Dynamic Sidebar Tabs */}
