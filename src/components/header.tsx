@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, Settings, User, Home, Plus, ShoppingCart, X, Menu, Package } from "lucide-react";
+import { Bell, Settings, User, Home, Plus, ShoppingCart, X, Menu, Package, LogOut, Edit3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -10,6 +10,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "@/hooks/useTheme";
 import { SheetDescription } from "@/components/ui/sheet";
+import { Input } from "@/components/ui/input";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface HeaderProps {
   notificationCount?: number;
@@ -41,6 +44,7 @@ const Header = ({ notificationCount = 0 }: HeaderProps) => {
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
   const { isDark, toggleTheme } = useTheme();
+  const { toast } = useToast();
   
   // Settings state
   const [settings, setSettings] = useState({
@@ -50,8 +54,40 @@ const Header = ({ notificationCount = 0 }: HeaderProps) => {
     priceAlerts: true
   });
 
+  // Profile state
+  const [profile, setProfile] = useState({
+    name: "João da Silva",
+    email: "joao@email.com",
+    avatar: ""
+  });
+
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editedProfile, setEditedProfile] = useState(profile);
+
   const updateSetting = (key: string, value: boolean) => {
     setSettings(prev => ({ ...prev, [key]: value }));
+    toast({
+      title: "Configuração atualizada",
+      description: `${key} foi ${value ? 'ativado' : 'desativado'}.`
+    });
+  };
+
+  const handleSaveProfile = () => {
+    setProfile(editedProfile);
+    setIsEditingProfile(false);
+    toast({
+      title: "Perfil atualizado ✅",
+      description: "Suas informações foram salvas com sucesso."
+    });
+  };
+
+  const handleLogout = () => {
+    toast({
+      title: "Saindo da conta...",
+      description: "Você será redirecionado para a tela de login."
+    });
+    // Aqui você implementaria a lógica de logout real
+    console.log("Logout realizado");
   };
   
   // Dynamic state management for sidebar tabs
@@ -142,7 +178,7 @@ const Header = ({ notificationCount = 0 }: HeaderProps) => {
                 size="sm"
                 className="flex items-center gap-2"
               >
-                📦
+                <Package className="w-4 h-4" />
                 Produtos
               </Button>
             </Link>
@@ -353,12 +389,14 @@ const Header = ({ notificationCount = 0 }: HeaderProps) => {
                       <div className="mt-6 space-y-6">
                         <div className="flex items-center gap-4">
                           <Avatar className="w-16 h-16">
-                            <AvatarImage src="" />
-                            <AvatarFallback className="text-lg">JD</AvatarFallback>
+                            <AvatarImage src={profile.avatar} />
+                            <AvatarFallback className="text-lg">
+                              {profile.name.split(' ').map(n => n[0]).join('')}
+                            </AvatarFallback>
                           </Avatar>
                           <div>
-                            <h3 className="font-medium">João da Silva</h3>
-                            <p className="text-sm text-muted-foreground">joao@email.com</p>
+                            <h3 className="font-medium">{profile.name}</h3>
+                            <p className="text-sm text-muted-foreground">{profile.email}</p>
                           </div>
                         </div>
 
@@ -381,18 +419,88 @@ const Header = ({ notificationCount = 0 }: HeaderProps) => {
                         <Separator />
 
                         <div className="space-y-3">
-                          <Button variant="outline" className="w-full justify-start">
-                            <User className="w-4 h-4 mr-2" />
-                            Editar perfil
-                          </Button>
-                          <Button variant="outline" className="w-full justify-start">
+                          {/* Edit Profile Dialog */}
+                          <AlertDialog open={isEditingProfile} onOpenChange={setIsEditingProfile}>
+                            <AlertDialogTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                className="w-full justify-start"
+                                onClick={() => {
+                                  setEditedProfile(profile);
+                                  setIsEditingProfile(true);
+                                }}
+                              >
+                                <Edit3 className="w-4 h-4 mr-2" />
+                                Editar perfil
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Editar Perfil</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Atualize suas informações pessoais.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <div className="space-y-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor="edit-name">Nome</Label>
+                                  <Input
+                                    id="edit-name"
+                                    value={editedProfile.name}
+                                    onChange={(e) => setEditedProfile(prev => ({ ...prev, name: e.target.value }))}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor="edit-email">E-mail</Label>
+                                  <Input
+                                    id="edit-email"
+                                    type="email"
+                                    value={editedProfile.email}
+                                    onChange={(e) => setEditedProfile(prev => ({ ...prev, email: e.target.value }))}
+                                  />
+                                </div>
+                              </div>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleSaveProfile}>
+                                  Salvar alterações
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+
+                          <Button 
+                            variant="outline" 
+                            className="w-full justify-start"
+                            onClick={() => toggleSidebar('settings')}
+                          >
                             <Settings className="w-4 h-4 mr-2" />
                             Preferências
                           </Button>
-                          <Button variant="destructive" className="w-full justify-start">
-                            <X className="w-4 h-4 mr-2" />
-                            Sair
-                          </Button>
+
+                          {/* Logout Confirmation Dialog */}
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="destructive" className="w-full justify-start">
+                                <LogOut className="w-4 h-4 mr-2" />
+                                Sair
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Confirmar saída</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Tem certeza que deseja sair da sua conta? Você precisará fazer login novamente.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleLogout}>
+                                  Sim, sair
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </div>
                     )}

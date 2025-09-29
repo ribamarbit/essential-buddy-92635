@@ -5,7 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useRef } from "react";
 import { Plus, Scan, Trash2, Edit3, Camera, Upload } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -31,8 +33,12 @@ const ProductCatalog = () => {
     name: "", category: "", price: "", quantity: "", unit: "un", icon: ""
   });
   
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  
   const [scanText, setScanText] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const categories = ["Grãos", "Laticínios", "Carnes", "Verduras", "Frutas", "Limpeza", "Higiene", "Bebidas", "Outros"];
   const units = ["un", "kg", "g", "L", "ml", "pacote", "caixa"];
@@ -72,6 +78,27 @@ const ProductCatalog = () => {
     toast({
       title: "Produto removido",
       description: `${product?.name} foi removido do catálogo.`
+    });
+  };
+
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveEditedProduct = () => {
+    if (!editingProduct) return;
+    
+    setProducts(prev => prev.map(p => 
+      p.id === editingProduct.id ? editingProduct : p
+    ));
+    
+    setIsEditDialogOpen(false);
+    setEditingProduct(null);
+    
+    toast({
+      title: "Produto atualizado! ✅",
+      description: `${editingProduct.name} foi atualizado com sucesso.`
     });
   };
 
@@ -124,6 +151,31 @@ const ProductCatalog = () => {
       
       setIsProcessing(false);
     }, 2000);
+  };
+
+  const handleCameraCapture = () => {
+    // Simula funcionalidade de câmera
+    toast({
+      title: "Câmera em desenvolvimento",
+      description: "Esta funcionalidade será implementada em breve para capturar imagens de notas fiscais."
+    });
+  };
+
+  const handleFileUpload = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Simula processamento de arquivo
+      toast({
+        title: "Upload em desenvolvimento",
+        description: `Arquivo ${file.name} será processado quando a funcionalidade estiver completa.`
+      });
+    }
   };
 
   const totalValue = products.reduce((sum, product) => sum + (product.price * product.quantity), 0);
@@ -224,9 +276,115 @@ const ProductCatalog = () => {
                         </div>
                         
                         <div className="flex items-center space-x-2">
-                          <Button variant="ghost" size="sm">
-                            <Edit3 className="w-4 h-4" />
-                          </Button>
+                          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                            <DialogTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleEditProduct(product)}
+                              >
+                                <Edit3 className="w-4 h-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Editar Produto</DialogTitle>
+                                <DialogDescription>
+                                  Atualize as informações do produto.
+                                </DialogDescription>
+                              </DialogHeader>
+                              {editingProduct && (
+                                <div className="grid gap-4">
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                      <Label htmlFor="edit-name">Nome</Label>
+                                      <Input
+                                        id="edit-name"
+                                        value={editingProduct.name}
+                                        onChange={(e) => setEditingProduct(prev => 
+                                          prev ? { ...prev, name: e.target.value } : null
+                                        )}
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="edit-category">Categoria</Label>
+                                      <select
+                                        id="edit-category"
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                        value={editingProduct.category}
+                                        onChange={(e) => setEditingProduct(prev => 
+                                          prev ? { ...prev, category: e.target.value } : null
+                                        )}
+                                      >
+                                        {categories.map(cat => (
+                                          <option key={cat} value={cat}>{cat}</option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                  </div>
+                                  <div className="grid grid-cols-3 gap-4">
+                                    <div className="space-y-2">
+                                      <Label htmlFor="edit-price">Preço</Label>
+                                      <Input
+                                        id="edit-price"
+                                        type="number"
+                                        step="0.01"
+                                        value={editingProduct.price}
+                                        onChange={(e) => setEditingProduct(prev => 
+                                          prev ? { ...prev, price: parseFloat(e.target.value) || 0 } : null
+                                        )}
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="edit-quantity">Quantidade</Label>
+                                      <Input
+                                        id="edit-quantity"
+                                        type="number"
+                                        value={editingProduct.quantity}
+                                        onChange={(e) => setEditingProduct(prev => 
+                                          prev ? { ...prev, quantity: parseInt(e.target.value) || 0 } : null
+                                        )}
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="edit-unit">Unidade</Label>
+                                      <select
+                                        id="edit-unit"
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                        value={editingProduct.unit}
+                                        onChange={(e) => setEditingProduct(prev => 
+                                          prev ? { ...prev, unit: e.target.value } : null
+                                        )}
+                                      >
+                                        {units.map(unit => (
+                                          <option key={unit} value={unit}>{unit}</option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label htmlFor="edit-icon">Emoji</Label>
+                                    <Input
+                                      id="edit-icon"
+                                      value={editingProduct.icon}
+                                      onChange={(e) => setEditingProduct(prev => 
+                                        prev ? { ...prev, icon: e.target.value } : null
+                                      )}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                              <DialogFooter>
+                                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                                  Cancelar
+                                </Button>
+                                <Button onClick={handleSaveEditedProduct}>
+                                  Salvar Alterações
+                                </Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                          
                           <Button 
                             variant="ghost" 
                             size="sm"
@@ -368,15 +526,30 @@ const ProductCatalog = () => {
                     {isProcessing ? "Processando..." : "Processar Texto"}
                   </Button>
                   
-                  <Button variant="outline" disabled>
+                  <Button 
+                    variant="outline"
+                    onClick={handleCameraCapture}
+                  >
                     <Camera className="w-4 h-4 mr-2" />
                     Câmera
                   </Button>
                   
-                  <Button variant="outline" disabled>
+                  <Button 
+                    variant="outline"
+                    onClick={handleFileUpload}
+                  >
                     <Upload className="w-4 h-4 mr-2" />
                     Upload
                   </Button>
+                  
+                  {/* Hidden file input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*,.pdf"
+                    style={{ display: 'none' }}
+                    onChange={handleFileChange}
+                  />
                 </div>
                 
                 <div className="text-xs text-muted-foreground p-4 bg-muted/30 rounded-lg">
