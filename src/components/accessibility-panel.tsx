@@ -7,6 +7,89 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAccessibility } from "@/hooks/useAccessibility";
 
+// Variável global para controlar o leitor de tela
+let speechSynthesis: SpeechSynthesis;
+let isScreenReaderActive = false;
+
+const activateScreenReader = () => {
+  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    speechSynthesis = window.speechSynthesis;
+    isScreenReaderActive = true;
+    
+    // Função para ler texto
+    const readText = (text: string) => {
+      if (isScreenReaderActive && text) {
+        speechSynthesis.cancel(); // Cancela qualquer leitura anterior
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'pt-BR';
+        utterance.rate = 0.8;
+        utterance.pitch = 1;
+        speechSynthesis.speak(utterance);
+      }
+    };
+    
+    // Adicionar listeners para elementos interativos
+    const addListeners = () => {
+      // Ler botões ao focar
+      document.querySelectorAll('button, a, input, select, textarea').forEach(element => {
+        element.addEventListener('focus', () => {
+          const text = element.getAttribute('aria-label') || 
+                      element.textContent || 
+                      element.getAttribute('placeholder') || 
+                      'Elemento interativo';
+          readText(text);
+        });
+      });
+      
+      // Ler headings ao passar o mouse
+      document.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(element => {
+        element.addEventListener('mouseenter', () => {
+          readText(`Título: ${element.textContent}`);
+        });
+      });
+      
+      // Ler texto importante
+      document.querySelectorAll('[role="alert"], .toast, .alert').forEach(element => {
+        const observer = new MutationObserver(() => {
+          if (element.textContent) {
+            readText(`Alerta: ${element.textContent}`);
+          }
+        });
+        observer.observe(element, { childList: true, subtree: true });
+      });
+    };
+    
+    // Aplicar listeners imediatamente e após mudanças no DOM
+    addListeners();
+    
+    // Observer para novos elementos
+    const observer = new MutationObserver(() => {
+      setTimeout(addListeners, 100);
+    });
+    
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+    
+    // Anunciar ativação
+    readText('Leitor de tela ativado. Navegue pela página para ouvir o conteúdo.');
+  }
+};
+
+const deactivateScreenReader = () => {
+  isScreenReaderActive = false;
+  if (speechSynthesis) {
+    speechSynthesis.cancel();
+  }
+  
+  // Remover todos os listeners (isso é simplificado, em produção seria mais específico)
+  document.querySelectorAll('button, a, input, select, textarea, h1, h2, h3, h4, h5, h6').forEach(element => {
+    element.removeEventListener('focus', () => {});
+    element.removeEventListener('mouseenter', () => {});
+  });
+};
+
 const AccessibilityPanel = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { settings, updateSetting } = useAccessibility();
@@ -86,14 +169,28 @@ const AccessibilityPanel = () => {
 
               {/* Screen Reader Support */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Volume2 className="w-4 h-4" />
-                  <Label htmlFor="screen-reader">Leitor de Tela</Label>
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <Volume2 className="w-4 h-4" />
+                    <Label htmlFor="screen-reader">Leitor de Tela</Label>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Ativa narração dos elementos da página
+                  </p>
                 </div>
                 <Switch
                   id="screen-reader"
                   checked={settings.screenReader}
-                  onCheckedChange={(checked) => updateSetting('screenReader', checked)}
+                  onCheckedChange={(checked) => {
+                    updateSetting('screenReader', checked);
+                    if (checked) {
+                      // Ativar funcionalidade de leitor de tela
+                      activateScreenReader();
+                    } else {
+                      // Desativar funcionalidade de leitor de tela
+                      deactivateScreenReader();
+                    }
+                  }}
                 />
               </div>
 
@@ -115,6 +212,7 @@ const AccessibilityPanel = () => {
                   updateSetting('highContrast', false);
                   updateSetting('reducedMotion', false);
                   updateSetting('screenReader', false);
+                  deactivateScreenReader();
                 }}
               >
                 Restaurar Configurações Padrão

@@ -136,6 +136,17 @@ const Header = ({ notificationCount = 0 }: HeaderProps) => {
               </Button>
             </Link>
             
+            <Link to="/products">
+              <Button 
+                variant={isActive("/products") ? "default" : "ghost"} 
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                📦
+                Produtos
+              </Button>
+            </Link>
+            
             <Link to="/shopping-list">
               <Button 
                 variant={isActive("/shopping-list") ? "default" : "ghost"} 
