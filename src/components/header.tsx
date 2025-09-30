@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, Settings, User, Home, Plus, ShoppingCart, X, Menu, Package, LogOut, Edit3 } from "lucide-react";
+import { Bell, Settings, User, Home, Plus, ShoppingCart, X, Menu, Package, LogOut, Edit3, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -16,6 +16,8 @@ import { useToast } from "@/hooks/use-toast";
 
 interface HeaderProps {
   notificationCount?: number;
+  onLogout?: () => void;
+  onShowGuide?: () => void;
 }
 
 // Configuration for sidebar tabs - easily extensible for future additions
@@ -40,7 +42,7 @@ const sidebarTabs = {
   }
 };
 
-const Header = ({ notificationCount = 0 }: HeaderProps) => {
+const Header = ({ notificationCount = 0, onLogout, onShowGuide }: HeaderProps) => {
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
   const { isDark, toggleTheme } = useTheme();
@@ -476,6 +478,15 @@ const Header = ({ notificationCount = 0 }: HeaderProps) => {
                           >
                             <Settings className="w-4 h-4 mr-2" />
                             Preferências
+                          </Button>
+
+                          <Button 
+                            variant="outline" 
+                            className="w-full justify-start"
+                            onClick={onShowGuide}
+                          >
+                            <HelpCircle className="w-4 h-4 mr-2" />
+                            Guia do Usuário
                           </Button>
 
                           {/* Logout Confirmation Dialog */}

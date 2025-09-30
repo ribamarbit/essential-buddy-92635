@@ -516,40 +516,46 @@ const ProductCatalog = () => {
                   </p>
                 </div>
                 
-                <div className="flex space-x-2">
+                <div className="space-y-4">
                   <Button 
                     onClick={handleScanProcess} 
                     disabled={isProcessing}
-                    className="flex-1"
+                    className="w-full"
                   >
                     <Scan className="w-4 h-4 mr-2" />
                     {isProcessing ? "Processando..." : "Processar Texto"}
                   </Button>
                   
-                  <Button 
-                    variant="outline"
-                    onClick={handleCameraCapture}
-                  >
-                    <Camera className="w-4 h-4 mr-2" />
-                    Câmera
-                  </Button>
-                  
-                  <Button 
-                    variant="outline"
-                    onClick={handleFileUpload}
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    Upload
-                  </Button>
-                  
-                  {/* Hidden file input */}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*,.pdf"
-                    style={{ display: 'none' }}
-                    onChange={handleFileChange}
-                  />
+                  <div className="flex items-center justify-center space-x-3">
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCameraCapture}
+                      className="flex items-center gap-2 min-w-[110px]"
+                    >
+                      <Camera className="w-4 h-4" />
+                      Câmera
+                    </Button>
+                    
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      onClick={handleFileUpload}
+                      className="flex items-center gap-2 min-w-[110px]"
+                    >
+                      <Upload className="w-4 h-4" />
+                      Upload
+                    </Button>
+                    
+                    {/* Hidden file input */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*,.pdf"
+                      style={{ display: 'none' }}
+                      onChange={handleFileChange}
+                    />
+                  </div>
                 </div>
                 
                 <div className="text-xs text-muted-foreground p-4 bg-muted/30 rounded-lg">

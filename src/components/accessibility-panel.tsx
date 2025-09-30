@@ -41,11 +41,19 @@ const activateScreenReader = () => {
         });
       });
       
-      // Ler headings ao passar o mouse
-      document.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(element => {
-        element.addEventListener('mouseenter', () => {
-          readText(`Título: ${element.textContent}`);
-        });
+      // Ler headings ao passar o mouse E ao clicar (incluindo títulos menores)
+      document.querySelectorAll('h1, h2, h3, h4, h5, h6, .text-lg, .text-xl, .text-sm, .font-semibold, .font-bold, p, span').forEach(element => {
+        const clickHandler = () => {
+          const text = element.textContent || element.getAttribute('aria-label') || '';
+          if (text.trim()) {
+            readText(`${element.tagName?.toLowerCase().startsWith('h') ? 'Título: ' : 'Texto: '}${text}`);
+          }
+        };
+        
+        element.addEventListener('mouseenter', clickHandler);
+        element.addEventListener('click', clickHandler);
+        (element as HTMLElement).style.cursor = 'pointer';
+        element.setAttribute('tabindex', '0');
       });
       
       // Ler texto importante
@@ -73,7 +81,7 @@ const activateScreenReader = () => {
     });
     
     // Anunciar ativação
-    readText('Leitor de tela ativado. Navegue pela página para ouvir o conteúdo.');
+    readText('Leitor de tela ativado. Clique em qualquer texto ou título para ouvir o conteúdo.');
   }
 };
 
