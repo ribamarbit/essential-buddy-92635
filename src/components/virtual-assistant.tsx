@@ -18,7 +18,7 @@ const VirtualAssistant = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
-      text: "Olá! Sou seu assistente virtual. Como posso ajudá-lo hoje?",
+      text: "Olá! 😊 Sou sua assistente virtual e estou aqui para ajudá-lo!\n\nComo posso tornar sua experiência melhor hoje? Escolha uma opção ou me diga o que precisa:\n\n1️⃣ Adicionar produtos ao catálogo\n2️⃣ Visualizar meus produtos\n3️⃣ Criar lista de compras\n4️⃣ Configurar acessibilidade\n5️⃣ Falar com o suporte\n6️⃣ Ver todas as funcionalidades\n\nVocê pode digitar o número da opção ou descrever sua dúvida! 💬",
       isBot: true,
       timestamp: new Date()
     }
@@ -27,26 +27,41 @@ const VirtualAssistant = () => {
   const { toast } = useToast();
 
   const quickResponses: { [key: string]: string } = {
-    "como adicionar produto": "Para adicionar um produto, clique em 'Adicionar Itens' no menu e preencha as informações necessárias como nome, categoria e preço.",
-    "como ver produtos": "Acesse a aba 'Catálogo de Produtos' no menu para visualizar todos os seus produtos cadastrados.",
-    "como criar lista": "Na página 'Lista de Compras', você pode adicionar produtos à sua lista e gerenciá-los facilmente.",
-    "ajuda": "Posso ajudá-lo com:\n- Adicionar produtos\n- Ver catálogo\n- Criar listas de compras\n- Configurar acessibilidade\n- Dúvidas sobre o app",
-    "acessibilidade": "O aplicativo possui recursos de acessibilidade como: leitor de tela, alto contraste, redução de animações e ajuste de tamanho da fonte. Acesse o botão de acessibilidade no canto inferior direito.",
-    "suporte": "Para entrar em contato com o suporte, acesse a aba 'Suporte' no menu ou envie um e-mail para suporte@concierge.com"
+    "1": "📦 **Adicionar Produtos**\n\nÉ muito fácil! Siga estes passos:\n\n1. Clique no menu 'Adicionar Itens' no topo da página\n2. Preencha as informações do produto:\n   • Nome do produto\n   • Categoria (ex: alimentos, bebidas, limpeza)\n   • Preço\n   • Quantidade (opcional)\n3. Clique em 'Salvar'\n\nPronto! Seu produto será adicionado ao catálogo. 🎉\n\nPrecisa de mais alguma ajuda?",
+    "2": "📋 **Visualizar Produtos**\n\nPara ver todos os seus produtos cadastrados:\n\n1. Clique em 'Catálogo de Produtos' no menu superior\n2. Lá você verá todos os produtos com:\n   • Nome e descrição\n   • Preço\n   • Categoria\n   • Opções para editar ou remover\n\nVocê também pode filtrar por categoria para encontrar produtos específicos!\n\nQuer saber mais sobre outra funcionalidade?",
+    "3": "🛒 **Criar Lista de Compras**\n\nVou te explicar como funciona:\n\n1. Acesse 'Lista de Compras' no menu\n2. Selecione os produtos do catálogo que deseja adicionar\n3. Ajuste as quantidades conforme necessário\n4. Marque os itens como comprados ao pegá-los\n5. Você pode salvar a lista para usar depois!\n\nMuito prático para não esquecer nada nas compras! 📝\n\nPosso ajudar com mais alguma coisa?",
+    "4": "♿ **Configurar Acessibilidade**\n\nNosso app é inclusivo! Temos várias opções:\n\n🔊 **Leitor de Tela** - Lê todos os textos em voz alta\n🎨 **Alto Contraste** - Melhora a visualização\n⏸️ **Reduzir Animações** - Para quem prefere menos movimento\n🔤 **Ajustar Tamanho da Fonte** - Deixe do tamanho ideal para você\n\nPara ativar:\n1. Clique no ícone de acessibilidade no canto inferior direito\n2. Escolha as opções que precisa\n\nTodos podem usar nosso app confortavelmente! 💙\n\nQuer saber mais?",
+    "5": "📞 **Falar com o Suporte**\n\nEstamos aqui para ajudar!\n\n**Opções de contato:**\n• Acesse a aba 'Suporte' no menu superior\n• Envie um e-mail: suporte@concierge.com\n• Nossa equipe responde em até 24 horas\n\nPara um atendimento mais rápido, descreva detalhadamente sua dúvida ou problema.\n\nPosso ajudar com algo mais?",
+    "6": "✨ **Todas as Funcionalidades**\n\nVeja tudo que nosso app oferece:\n\n1️⃣ **Adicionar Produtos** - Cadastre itens com nome, preço e categoria\n2️⃣ **Catálogo de Produtos** - Visualize e gerencie seus produtos\n3️⃣ **Lista de Compras** - Crie e organize suas compras\n4️⃣ **Dashboard** - Veja estatísticas e resumos\n5️⃣ **Acessibilidade** - Recursos para todos os usuários\n6️⃣ **Suporte** - Tire suas dúvidas com nossa equipe\n7️⃣ **Guia do Usuário** - Tutorial completo do app\n\nDigite o número da funcionalidade para saber mais detalhes! 😊",
+    "adicionar": "📦 **Adicionar Produtos**\n\nÉ muito fácil! Siga estes passos:\n\n1. Clique no menu 'Adicionar Itens' no topo da página\n2. Preencha as informações do produto:\n   • Nome do produto\n   • Categoria (ex: alimentos, bebidas, limpeza)\n   • Preço\n   • Quantidade (opcional)\n3. Clique em 'Salvar'\n\nPronto! Seu produto será adicionado ao catálogo. 🎉",
+    "produto": "📦 **Adicionar Produtos**\n\nÉ muito fácil! Siga estes passos:\n\n1. Clique no menu 'Adicionar Itens' no topo da página\n2. Preencha as informações do produto:\n   • Nome do produto\n   • Categoria (ex: alimentos, bebidas, limpeza)\n   • Preço\n   • Quantidade (opcional)\n3. Clique em 'Salvar'\n\nPronto! Seu produto será adicionado ao catálogo. 🎉",
+    "ver": "📋 **Visualizar Produtos**\n\nPara ver todos os seus produtos cadastrados:\n\n1. Clique em 'Catálogo de Produtos' no menu superior\n2. Lá você verá todos os produtos com:\n   • Nome e descrição\n   • Preço\n   • Categoria\n   • Opções para editar ou remover\n\nVocê também pode filtrar por categoria!",
+    "catalogo": "📋 **Visualizar Produtos**\n\nPara ver todos os seus produtos cadastrados:\n\n1. Clique em 'Catálogo de Produtos' no menu superior\n2. Lá você verá todos os produtos com:\n   • Nome e descrição\n   • Preço\n   • Categoria\n   • Opções para editar ou remover\n\nVocê também pode filtrar por categoria!",
+    "lista": "🛒 **Criar Lista de Compras**\n\nVou te explicar como funciona:\n\n1. Acesse 'Lista de Compras' no menu\n2. Selecione os produtos do catálogo que deseja adicionar\n3. Ajuste as quantidades conforme necessário\n4. Marque os itens como comprados ao pegá-los\n5. Você pode salvar a lista para usar depois!\n\nMuito prático para não esquecer nada nas compras! 📝",
+    "compra": "🛒 **Criar Lista de Compras**\n\nVou te explicar como funciona:\n\n1. Acesse 'Lista de Compras' no menu\n2. Selecione os produtos do catálogo que deseja adicionar\n3. Ajuste as quantidades conforme necessário\n4. Marque os itens como comprados ao pegá-los\n5. Você pode salvar a lista para usar depois!\n\nMuito prático para não esquecer nada nas compras! 📝",
+    "acessibilidade": "♿ **Configurar Acessibilidade**\n\nNosso app é inclusivo! Temos várias opções:\n\n🔊 **Leitor de Tela** - Lê todos os textos em voz alta\n🎨 **Alto Contraste** - Melhora a visualização\n⏸️ **Reduzir Animações** - Para quem prefere menos movimento\n🔤 **Ajustar Tamanho da Fonte** - Deixe do tamanho ideal para você\n\nPara ativar:\n1. Clique no ícone de acessibilidade no canto inferior direito\n2. Escolha as opções que precisa\n\nTodos podem usar nosso app confortavelmente! 💙",
+    "suporte": "📞 **Falar com o Suporte**\n\nEstamos aqui para ajudar!\n\n**Opções de contato:**\n• Acesse a aba 'Suporte' no menu superior\n• Envie um e-mail: suporte@concierge.com\n• Nossa equipe responde em até 24 horas\n\nPara um atendimento mais rápido, descreva detalhadamente sua dúvida ou problema.",
+    "ajuda": "✨ **Todas as Funcionalidades**\n\nVeja tudo que nosso app oferece:\n\n1️⃣ **Adicionar Produtos** - Cadastre itens com nome, preço e categoria\n2️⃣ **Catálogo de Produtos** - Visualize e gerencie seus produtos\n3️⃣ **Lista de Compras** - Crie e organize suas compras\n4️⃣ **Dashboard** - Veja estatísticas e resumos\n5️⃣ **Acessibilidade** - Recursos para todos os usuários\n6️⃣ **Suporte** - Tire suas dúvidas com nossa equipe\n7️⃣ **Guia do Usuário** - Tutorial completo do app\n\nDigite o número da funcionalidade para saber mais detalhes! 😊",
+    "menu": "✨ **Todas as Funcionalidades**\n\nVeja tudo que nosso app oferece:\n\n1️⃣ **Adicionar Produtos** - Cadastre itens com nome, preço e categoria\n2️⃣ **Catálogo de Produtos** - Visualize e gerencie seus produtos\n3️⃣ **Lista de Compras** - Crie e organize suas compras\n4️⃣ **Dashboard** - Veja estatísticas e resumos\n5️⃣ **Acessibilidade** - Recursos para todos os usuários\n6️⃣ **Suporte** - Tire suas dúvidas com nossa equipe\n7️⃣ **Guia do Usuário** - Tutorial completo do app\n\nDigite o número da funcionalidade para saber mais detalhes! 😊"
   };
 
   const getBotResponse = (userMessage: string): string => {
-    const lowerMessage = userMessage.toLowerCase();
+    const lowerMessage = userMessage.trim().toLowerCase();
     
-    // Check for exact or partial matches
+    // Check for number options first (1-6)
+    if (lowerMessage.match(/^[1-6]$/)) {
+      return quickResponses[lowerMessage];
+    }
+    
+    // Check for keyword matches
     for (const [key, response] of Object.entries(quickResponses)) {
       if (lowerMessage.includes(key)) {
         return response;
       }
     }
 
-    // Default response
-    return "Desculpe, não entendi sua pergunta. Você pode perguntar sobre:\n- Como adicionar produtos\n- Como ver produtos\n- Como criar lista\n- Acessibilidade\n- Suporte\n\nOu digite 'ajuda' para ver todas as opções.";
+    // Default response with suggestions
+    return "Hmm, não consegui entender exatamente o que você precisa. 🤔\n\nMas não se preocupe! Posso ajudar com:\n\n1️⃣ Adicionar produtos\n2️⃣ Ver catálogo\n3️⃣ Criar lista de compras\n4️⃣ Configurar acessibilidade\n5️⃣ Falar com suporte\n6️⃣ Ver todas as funcionalidades\n\nDigite o número da opção ou tente descrever de outra forma! 😊";
   };
 
   const handleSendMessage = () => {
