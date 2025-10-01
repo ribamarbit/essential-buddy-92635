@@ -22,15 +22,10 @@ const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showUserGuide, setShowUserGuide] = useState(false);
 
+  // Não verificamos localStorage - sempre inicia com login necessário
   useEffect(() => {
-    // Check if user is logged in (simulation)
-    const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    setIsLoggedIn(loggedIn);
-    
-    // Check if this is the first time user is accessing the app
-    if (loggedIn && !localStorage.getItem('hasSeenGuide')) {
-      setShowUserGuide(true);
-    }
+    // Limpa o localStorage ao carregar para garantir que sempre comece com login
+    localStorage.removeItem('isLoggedIn');
   }, []);
 
   const handleLogin = () => {
