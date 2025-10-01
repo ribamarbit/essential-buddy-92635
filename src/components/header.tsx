@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, Settings, User, Home, Plus, ShoppingCart, X, Menu, Package, LogOut, Edit3, HelpCircle } from "lucide-react";
+import { Bell, Settings, User, Home, Plus, ShoppingCart, X, Menu, Package, LogOut, Edit3, HelpCircle, HeadphonesIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -88,8 +88,9 @@ const Header = ({ notificationCount = 0, onLogout, onShowGuide }: HeaderProps) =
       title: "Saindo da conta...",
       description: "Você será redirecionado para a tela de login."
     });
-    // Aqui você implementaria a lógica de logout real
-    console.log("Logout realizado");
+    if (onLogout) {
+      onLogout();
+    }
   };
   
   // Dynamic state management for sidebar tabs
@@ -195,6 +196,17 @@ const Header = ({ notificationCount = 0, onLogout, onShowGuide }: HeaderProps) =
                 Lista
               </Button>
             </Link>
+            
+            <Link to="/support">
+              <Button 
+                variant={isActive("/support") ? "default" : "ghost"} 
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <HeadphonesIcon className="w-4 h-4" />
+                Suporte
+              </Button>
+            </Link>
           </nav>
 
           {/* Navigation actions */}
@@ -251,6 +263,16 @@ const Header = ({ notificationCount = 0, onLogout, onShowGuide }: HeaderProps) =
                       >
                         <ShoppingCart className="w-4 h-4 mr-2" />
                         Lista de Compras
+                      </Button>
+                    </Link>
+                    
+                    <Link to="/support" className="w-full">
+                      <Button 
+                        variant={isActive("/support") ? "default" : "ghost"} 
+                        className="w-full justify-start"
+                      >
+                        <HeadphonesIcon className="w-4 h-4 mr-2" />
+                        Suporte
                       </Button>
                     </Link>
                   </div>
@@ -488,6 +510,16 @@ const Header = ({ notificationCount = 0, onLogout, onShowGuide }: HeaderProps) =
                             <HelpCircle className="w-4 h-4 mr-2" />
                             Guia do Usuário
                           </Button>
+
+                          <Link to="/support" className="w-full">
+                            <Button 
+                              variant="outline" 
+                              className="w-full justify-start"
+                            >
+                              <HeadphonesIcon className="w-4 h-4 mr-2" />
+                              Suporte
+                            </Button>
+                          </Link>
 
                           {/* Logout Confirmation Dialog */}
                           <AlertDialog>

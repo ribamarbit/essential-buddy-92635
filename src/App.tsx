@@ -10,9 +10,11 @@ import ProductCatalog from "./pages/ProductCatalog";
 import ShoppingListPage from "./pages/ShoppingListPage";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
+import Support from "./pages/Support";
 import Header from "./components/header";
 import AccessibilityPanel from "./components/accessibility-panel";
 import UserGuide from "./components/user-guide";
+import VirtualAssistant from "./components/virtual-assistant";
 
 const queryClient = new QueryClient();
 
@@ -76,10 +78,12 @@ const App = () => {
               <Route path="/add-items" element={<AddItems />} />
               <Route path="/products" element={<ProductCatalog />} />
               <Route path="/shopping-list" element={<ShoppingListPage />} />
+              <Route path="/support" element={<Support />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
             <AccessibilityPanel />
+            <VirtualAssistant />
             <UserGuide isOpen={showUserGuide} onClose={handleCloseGuide} />
           </div>
         </BrowserRouter>

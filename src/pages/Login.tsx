@@ -21,6 +21,25 @@ const Login = ({ onLogin }: LoginProps) => {
     confirmPassword: ""
   });
 
+  const validatePassword = (password: string): { isValid: boolean; message: string } => {
+    if (password.length < 8) {
+      return { isValid: false, message: "A senha deve ter no mínimo 8 caracteres." };
+    }
+    if (!/[A-Z]/.test(password)) {
+      return { isValid: false, message: "A senha deve conter pelo menos uma letra maiúscula." };
+    }
+    if (!/[a-z]/.test(password)) {
+      return { isValid: false, message: "A senha deve conter pelo menos uma letra minúscula." };
+    }
+    if (!/[0-9]/.test(password)) {
+      return { isValid: false, message: "A senha deve conter pelo menos um número." };
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      return { isValid: false, message: "A senha deve conter pelo menos um caractere especial." };
+    }
+    return { isValid: true, message: "" };
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -51,6 +70,19 @@ const Login = ({ onLogin }: LoginProps) => {
       return;
     }
 
+    // Validar senha forte ao criar conta
+    if (!isLogin) {
+      const passwordValidation = validatePassword(formData.password);
+      if (!passwordValidation.isValid) {
+        toast({
+          title: "Senha fraca",
+          description: passwordValidation.message,
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
     if (!isLogin && formData.password !== formData.confirmPassword) {
       toast({
         title: "Erro",
@@ -70,10 +102,18 @@ const Login = ({ onLogin }: LoginProps) => {
       return;
     }
 
-    toast({
-      title: isLogin ? "Login realizado com sucesso! ✅" : "Conta criada com sucesso! ✅",
-      description: isLogin ? "Bem-vindo de volta!" : "Sua conta foi criada. Redirecionando..."
-    });
+    // Mensagem diferente para criação de conta incluindo confirmação por e-mail
+    if (!isLogin) {
+      toast({
+        title: "Conta criada com sucesso! ✅",
+        description: "Um e-mail de confirmação foi enviado para " + formData.email
+      });
+    } else {
+      toast({
+        title: "Login realizado com sucesso! ✅",
+        description: "Bem-vindo de volta!"
+      });
+    }
     
     setTimeout(() => {
       onLogin();
@@ -152,6 +192,11 @@ const Login = ({ onLogin }: LoginProps) => {
                     )}
                   </Button>
                 </div>
+                {!isLogin && (
+                  <p className="text-xs text-muted-foreground">
+                    A senha deve ter 8+ caracteres, incluindo maiúsculas, minúsculas, números e caracteres especiais.
+                  </p>
+                )}
               </div>
             )}
             
