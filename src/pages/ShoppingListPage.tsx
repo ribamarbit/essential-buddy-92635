@@ -50,10 +50,31 @@ const ShoppingListPage = () => {
   };
 
   const handleCheckout = () => {
+    if (shoppingList.length === 0) {
+      toast({
+        title: "Lista vazia",
+        description: "Adicione itens à sua lista antes de finalizar.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Simula finalização de compra
+    const total = shoppingList.reduce((sum, item) => sum + item.estimatedPrice, 0);
+    
     toast({
-      title: "Redirecionando para o checkout! 🛒",
-      description: "Em breve você será direcionado para finalizar sua compra."
+      title: "Lista de compras finalizada! ✅",
+      description: `Total: R$ ${total.toFixed(2)} • ${shoppingList.length} ${shoppingList.length === 1 ? 'item' : 'itens'}. Boa compra!`
     });
+    
+    // Limpa a lista após 2 segundos
+    setTimeout(() => {
+      setShoppingList([]);
+      toast({
+        title: "Lista limpa!",
+        description: "Sua lista foi resetada. Adicione novos itens quando precisar."
+      });
+    }, 2000);
   };
 
   const totalValue = shoppingList.reduce((sum, item) => sum + item.estimatedPrice, 0);

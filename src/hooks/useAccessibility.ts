@@ -54,8 +54,13 @@ export const useAccessibility = () => {
     // Apply reduced motion
     if (settings.reducedMotion) {
       root.classList.add('reduce-motion');
+      // Aplica preferência de motion reduzido ao sistema
+      root.style.setProperty('--transition-smooth', 'none');
+      root.style.setProperty('--transition-bounce', 'none');
     } else {
       root.classList.remove('reduce-motion');
+      root.style.setProperty('--transition-smooth', 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)');
+      root.style.setProperty('--transition-bounce', 'all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)');
     }
   }, [settings]);
 

@@ -130,6 +130,47 @@ const AddItems = () => {
     return detectedItems;
   };
 
+  const handleCameraCapture = async () => {
+    try {
+      // Solicita permissão para câmera
+      const permission = await navigator.permissions.query({ name: 'camera' as PermissionName });
+      
+      if (permission.state === 'denied') {
+        toast({
+          title: "Permissão negada",
+          description: "Por favor, permita o acesso à câmera nas configurações do navegador.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Testa acesso à câmera
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      stream.getTracks().forEach(track => track.stop()); // Para o stream após verificar permissão
+      
+      // Abre o input de arquivo com câmera
+      if (fileInputRef.current) {
+        fileInputRef.current.setAttribute('capture', 'environment');
+        fileInputRef.current.setAttribute('accept', 'image/*');
+        fileInputRef.current.click();
+      }
+    } catch (error) {
+      toast({
+        title: "Acesso à câmera negado",
+        description: "É necessário permitir o acesso à câmera para usar esta função.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleGalleryUpload = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.removeAttribute('capture');
+      fileInputRef.current.setAttribute('accept', 'image/*');
+      fileInputRef.current.click();
+    }
+  };
+
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -238,32 +279,41 @@ const AddItems = () => {
               <Button
                 variant="outline"
                 className="h-24 flex flex-col gap-2"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={handleCameraCapture}
                 disabled={isScanning}
               >
                 <Camera className="w-6 h-6" />
-                <span>{isScanning ? 'Processando...' : 'Tirar Foto / Upload'}</span>
+                <span>{isScanning ? 'Processando...' : 'Câmera'}</span>
               </Button>
               
               <Button
                 variant="outline"
                 className="h-24 flex flex-col gap-2"
-                onClick={handleManualListInput}
+                onClick={handleGalleryUpload}
                 disabled={isScanning}
               >
                 <Upload className="w-6 h-6" />
-                <span>Colar Lista de Texto</span>
+                <span>Galeria</span>
               </Button>
               
               <input
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
-                capture="environment"
                 onChange={handleImageUpload}
                 className="hidden"
               />
             </div>
+            
+            <Button
+              variant="secondary"
+              className="w-full"
+              onClick={handleManualListInput}
+              disabled={isScanning}
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Colar Lista de Texto
+            </Button>
             
             <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
               <p className="text-xs text-blue-800">

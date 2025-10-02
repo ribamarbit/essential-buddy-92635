@@ -1,10 +1,33 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { MessageCircle, Send, X, Bot } from "lucide-react";
+import { useState, useEffect, useRef } from 'react';
+import { MessageCircle, X, Send, Bot } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useToast } from "@/hooks/use-toast";
+
+// Som de notificação (beep curto)
+const playNotificationSound = () => {
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = 800;
+    oscillator.type = 'sine';
+    
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.15);
+  } catch (error) {
+    console.log('Audio not supported');
+  }
+};
 
 interface Message {
   id: number;
@@ -18,13 +41,19 @@ const VirtualAssistant = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
-      text: "Olá! 😊 Sou sua assistente virtual e estou aqui para ajudá-lo!\n\nComo posso tornar sua experiência melhor hoje? Escolha uma opção ou me diga o que precisa:\n\n1️⃣ Adicionar produtos ao catálogo\n2️⃣ Visualizar meus produtos\n3️⃣ Criar lista de compras\n4️⃣ Configurar acessibilidade\n5️⃣ Falar com o suporte\n6️⃣ Ver todas as funcionalidades\n\nVocê pode digitar o número da opção ou descrever sua dúvida! 💬",
+      text: "Olá! Sou a Concierge, sua assistente virtual de compras! 👋\n\nComo posso ajudar você hoje? Escolha uma das opções:\n\n1️⃣ Como funciona o aplicativo?\n2️⃣ Como adicionar itens?\n3️⃣ Como gerenciar produtos?\n4️⃣ Como usar a lista de compras?\n5️⃣ Preciso de suporte técnico\n6️⃣ Outras dúvidas\n\nDigite o número da opção ou escreva sua pergunta!",
       isBot: true,
       timestamp: new Date()
     }
   ]);
   const [inputMessage, setInputMessage] = useState("");
   const { toast } = useToast();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll para última mensagem
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const quickResponses: { [key: string]: string } = {
     "1": "📦 **Adicionar Produtos**\n\nÉ muito fácil! Siga estes passos:\n\n1. Clique no menu 'Adicionar Itens' no topo da página\n2. Preencha as informações do produto:\n   • Nome do produto\n   • Categoria (ex: alimentos, bebidas, limpeza)\n   • Preço\n   • Quantidade (opcional)\n3. Clique em 'Salvar'\n\nPronto! Seu produto será adicionado ao catálogo. 🎉\n\nPrecisa de mais alguma ajuda?",
@@ -93,6 +122,7 @@ const VirtualAssistant = () => {
         timestamp: new Date()
       };
       setMessages(prev => [...prev, botResponse]);
+      playNotificationSound(); // Toca som quando bot responde
     }, 500);
 
     setInputMessage("");
@@ -121,10 +151,10 @@ const VirtualAssistant = () => {
           <SheetHeader className="p-6 pb-4 border-b">
             <SheetTitle className="flex items-center gap-2">
               <Bot className="w-5 h-5 text-success" />
-              Assistente Virtual
+              Concierge - Assistente Virtual
             </SheetTitle>
             <p className="text-sm text-muted-foreground">
-              Tire suas dúvidas sobre o aplicativo
+              Sua companheira de compras inteligentes
             </p>
           </SheetHeader>
 
@@ -145,7 +175,7 @@ const VirtualAssistant = () => {
                     {message.isBot && (
                       <div className="flex items-center gap-2 mb-1">
                         <Bot className="w-4 h-4" />
-                        <span className="text-xs font-semibold">Assistente</span>
+                        <span className="text-xs font-semibold">Concierge</span>
                       </div>
                     )}
                     <p className="text-sm whitespace-pre-line">{message.text}</p>
@@ -158,6 +188,7 @@ const VirtualAssistant = () => {
                   </div>
                 </div>
               ))}
+              <div ref={messagesEndRef} />
             </div>
           </ScrollArea>
 

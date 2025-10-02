@@ -233,10 +233,9 @@ const ProductCatalog = () => {
         </div>
 
         <Tabs defaultValue="catalog" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="catalog">Catálogo</TabsTrigger>
             <TabsTrigger value="add">Adicionar</TabsTrigger>
-            <TabsTrigger value="scan">Scanner</TabsTrigger>
           </TabsList>
           
           {/* Catalog Tab */}
@@ -491,85 +490,6 @@ const ProductCatalog = () => {
             </Card>
           </TabsContent>
           
-          {/* Scanner Tab */}
-          <TabsContent value="scan" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Scanner de Lista/Nota Fiscal</CardTitle>
-                <CardDescription>
-                  Cole o texto da sua lista de compras ou nota fiscal para extrair produtos automaticamente
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="scan-text">Texto da Lista/Nota Fiscal</Label>
-                  <Textarea
-                    id="scan-text"
-                    placeholder="Cole aqui o texto da sua lista de compras ou nota fiscal..."
-                    value={scanText}
-                    onChange={(e) => setScanText(e.target.value)}
-                    rows={8}
-                    className="min-h-[200px]"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Exemplo de formato: "Arroz 5 kg R$ 4,50" ou "Leite 1L R$3.80"
-                  </p>
-                </div>
-                
-                <div className="space-y-4">
-                  <Button 
-                    onClick={handleScanProcess} 
-                    disabled={isProcessing}
-                    className="w-full"
-                  >
-                    <Scan className="w-4 h-4 mr-2" />
-                    {isProcessing ? "Processando..." : "Processar Texto"}
-                  </Button>
-                  
-                  <div className="flex items-center justify-center space-x-3">
-                    <Button 
-                      variant="outline"
-                      size="sm"
-                      onClick={handleCameraCapture}
-                      className="flex items-center gap-2 min-w-[110px]"
-                    >
-                      <Camera className="w-4 h-4" />
-                      Câmera
-                    </Button>
-                    
-                    <Button 
-                      variant="outline"
-                      size="sm"
-                      onClick={handleFileUpload}
-                      className="flex items-center gap-2 min-w-[110px]"
-                    >
-                      <Upload className="w-4 h-4" />
-                      Upload
-                    </Button>
-                    
-                    {/* Hidden file input */}
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*,.pdf"
-                      style={{ display: 'none' }}
-                      onChange={handleFileChange}
-                    />
-                  </div>
-                </div>
-                
-                <div className="text-xs text-muted-foreground p-4 bg-muted/30 rounded-lg">
-                  <p className="font-medium mb-2">💡 Dica de uso:</p>
-                  <ul className="space-y-1">
-                    <li>• Certifique-se que cada produto esteja em uma linha separada</li>
-                    <li>• Inclua o nome, quantidade e preço do produto</li>
-                    <li>• Use formatos como: "Produto Quantidade Unidade Preço"</li>
-                    <li>• As funções de câmera e upload serão implementadas em breve</li>
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
       </main>
     </div>
