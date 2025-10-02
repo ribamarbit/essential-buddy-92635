@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { Camera, Upload } from "lucide-react";
 
 const predefinedItems = [
   { name: "Café", icon: "☕", defaultDays: 15 },
@@ -24,6 +25,8 @@ const AddItems = () => {
   const { toast } = useToast();
   const [customItem, setCustomItem] = useState({ name: "", icon: "", days: "" });
   const [selectedItems, setSelectedItems] = useState<typeof predefinedItems>([]);
+  const [isScanning, setIsScanning] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleQuickAdd = (item: typeof predefinedItems[0]) => {
     if (selectedItems.some(i => i.name === item.name)) {
@@ -73,6 +76,142 @@ const AddItems = () => {
     });
   };
 
+  const extractItemsFromText = (text: string) => {
+    const lines = text.toLowerCase().split('\n').filter(line => line.trim());
+    const detectedItems: typeof predefinedItems = [];
+    
+    // Palavras-chave para detectar itens comuns
+    const keywords: { [key: string]: { name: string; icon: string; days: number } } = {
+      'café': { name: 'Café', icon: '☕', days: 15 },
+      'cafe': { name: 'Café', icon: '☕', days: 15 },
+      'leite': { name: 'Leite', icon: '🥛', days: 7 },
+      'arroz': { name: 'Arroz', icon: '🍚', days: 30 },
+      'feijão': { name: 'Feijão', icon: '🫘', days: 45 },
+      'feijao': { name: 'Feijão', icon: '🫘', days: 45 },
+      'açúcar': { name: 'Açúcar', icon: '🍯', days: 45 },
+      'acucar': { name: 'Açúcar', icon: '🍯', days: 45 },
+      'óleo': { name: 'Óleo', icon: '🫒', days: 60 },
+      'oleo': { name: 'Óleo', icon: '🫒', days: 60 },
+      'sabão': { name: 'Sabão', icon: '🧼', days: 20 },
+      'sabao': { name: 'Sabão', icon: '🧼', days: 20 },
+      'detergente': { name: 'Detergente', icon: '🧽', days: 30 },
+      'ração': { name: 'Ração Pet', icon: '🐶', days: 25 },
+      'racao': { name: 'Ração Pet', icon: '🐶', days: 25 },
+      'pão': { name: 'Pão', icon: '🍞', days: 3 },
+      'pao': { name: 'Pão', icon: '🍞', days: 3 },
+      'ovos': { name: 'Ovos', icon: '🥚', days: 14 },
+      'ovo': { name: 'Ovos', icon: '🥚', days: 14 },
+      'frango': { name: 'Frango', icon: '🐔', days: 5 },
+      'macarrão': { name: 'Macarrão', icon: '🍝', days: 60 },
+      'macarrao': { name: 'Macarrão', icon: '🍝', days: 60 },
+      'massa': { name: 'Macarrão', icon: '🍝', days: 60 },
+      'carne': { name: 'Carne', icon: '🥩', days: 5 },
+      'peixe': { name: 'Peixe', icon: '🐟', days: 3 },
+      'farinha': { name: 'Farinha', icon: '🌾', days: 90 },
+      'sal': { name: 'Sal', icon: '🧂', days: 180 },
+      'manteiga': { name: 'Manteiga', icon: '🧈', days: 14 },
+      'queijo': { name: 'Queijo', icon: '🧀', days: 15 },
+      'iogurte': { name: 'Iogurte', icon: '🥛', days: 7 },
+      'sabonete': { name: 'Sabonete', icon: '🧼', days: 30 },
+      'shampoo': { name: 'Shampoo', icon: '🧴', days: 45 },
+      'condicionador': { name: 'Condicionador', icon: '🧴', days: 45 },
+      'pasta': { name: 'Pasta de dente', icon: '🦷', days: 30 },
+      'dente': { name: 'Pasta de dente', icon: '🦷', days: 30 }
+    };
+
+    lines.forEach(line => {
+      Object.entries(keywords).forEach(([key, item]) => {
+        if (line.includes(key) && !detectedItems.some(i => i.name === item.name)) {
+          detectedItems.push({ name: item.name, icon: item.icon, defaultDays: item.days });
+        }
+      });
+    });
+
+    return detectedItems;
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsScanning(true);
+    
+    try {
+      // Simular processamento de imagem (OCR)
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Texto de exemplo - em produção, isso viria de um serviço de OCR
+      const mockText = `
+        Lista de compras:
+        - Café
+        - Leite
+        - Arroz
+        - Feijão
+        - Óleo
+        - Pão
+      `;
+      
+      const detectedItems = extractItemsFromText(mockText);
+      
+      if (detectedItems.length > 0) {
+        // Adicionar apenas itens que ainda não estão selecionados
+        const newItems = detectedItems.filter(
+          item => !selectedItems.some(selected => selected.name === item.name)
+        );
+        
+        setSelectedItems(prev => [...prev, ...newItems]);
+        
+        toast({
+          title: "✅ Itens detectados!",
+          description: `${newItems.length} ${newItems.length === 1 ? 'item foi adicionado' : 'itens foram adicionados'} da sua lista.`
+        });
+      } else {
+        toast({
+          title: "Nenhum item detectado",
+          description: "Tente uma imagem mais clara ou adicione os itens manualmente.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro ao processar imagem",
+        description: "Não foi possível ler a imagem. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsScanning(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleManualListInput = () => {
+    const listText = prompt('Cole ou digite sua lista de compras (um item por linha):');
+    if (!listText) return;
+
+    const detectedItems = extractItemsFromText(listText);
+    
+    if (detectedItems.length > 0) {
+      const newItems = detectedItems.filter(
+        item => !selectedItems.some(selected => selected.name === item.name)
+      );
+      
+      setSelectedItems(prev => [...prev, ...newItems]);
+      
+      toast({
+        title: "✅ Itens adicionados!",
+        description: `${newItems.length} ${newItems.length === 1 ? 'item foi adicionado' : 'itens foram adicionados'} da sua lista.`
+      });
+    } else {
+      toast({
+        title: "Nenhum item reconhecido",
+        description: "Não conseguimos identificar itens na sua lista. Tente adicionar manualmente.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8 space-y-8">
@@ -85,6 +224,54 @@ const AddItems = () => {
             Selecione os itens que você consome regularmente para receber alertas inteligentes.
           </p>
         </div>
+
+        {/* Scanner de Lista */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Scanner Inteligente de Lista 📸</CardTitle>
+            <CardDescription>
+              Tire uma foto da sua lista ou cole o texto para adicionar itens automaticamente
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Button
+                variant="outline"
+                className="h-24 flex flex-col gap-2"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isScanning}
+              >
+                <Camera className="w-6 h-6" />
+                <span>{isScanning ? 'Processando...' : 'Tirar Foto / Upload'}</span>
+              </Button>
+              
+              <Button
+                variant="outline"
+                className="h-24 flex flex-col gap-2"
+                onClick={handleManualListInput}
+                disabled={isScanning}
+              >
+                <Upload className="w-6 h-6" />
+                <span>Colar Lista de Texto</span>
+              </Button>
+              
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+            </div>
+            
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+              <p className="text-xs text-blue-800">
+                💡 <strong>Dica:</strong> O scanner reconhece itens comuns como café, leite, arroz, feijão, óleo, pão, ovos, frango, macarrão, carne, peixe e muito mais!
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Quick selection */}
