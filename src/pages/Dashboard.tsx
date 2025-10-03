@@ -39,8 +39,10 @@ const Dashboard = () => {
       try {
         const products = JSON.parse(storedProducts);
         const items: EssentialItem[] = products.map((product: any) => {
-          const daysLeft = Math.floor(Math.random() * 20) + 1;
-          const totalDays = product.quantity || 30;
+          // Calcular dias restantes baseado na quantidade
+          // Quanto mais quantidade, mais dias restantes
+          const totalDays = Math.max(30, product.quantity * 2 || 30);
+          const daysLeft = Math.floor(Math.random() * totalDays);
           let status: "success" | "warning" | "urgent" = "success";
           
           if (daysLeft <= 2) status = "urgent";
@@ -112,8 +114,9 @@ const Dashboard = () => {
         try {
           const products = JSON.parse(storedProducts);
           const items: EssentialItem[] = products.map((product: any) => {
-            const daysLeft = Math.floor(Math.random() * 20) + 1;
-            const totalDays = product.quantity || 30;
+            // Calcular dias restantes baseado na quantidade
+            const totalDays = Math.max(30, product.quantity * 2 || 30);
+            const daysLeft = Math.floor(Math.random() * totalDays);
             let status: "success" | "warning" | "urgent" = "success";
             
             if (daysLeft <= 2) status = "urgent";

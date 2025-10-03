@@ -277,9 +277,8 @@ const AddItems = () => {
         </div>
 
         <Tabs defaultValue="catalog" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="catalog">Catálogo</TabsTrigger>
-            <TabsTrigger value="add">Adicionar</TabsTrigger>
             <TabsTrigger value="scanner">Scanner</TabsTrigger>
           </TabsList>
 
@@ -362,44 +361,6 @@ const AddItems = () => {
             </div>
           </TabsContent>
 
-          {/* Adicionar Tab */}
-          <TabsContent value="add" className="space-y-4">
-            {/* Selected items */}
-            {selectedItems.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Seus Itens Selecionados ({selectedItems.length})</CardTitle>
-                  <CardDescription>
-                    Estes são os itens que você vai monitorar
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
-                    {selectedItems.map((item) => (
-                      <div
-                        key={item.name}
-                        className="relative group p-3 border rounded-lg text-center hover:bg-muted/50 transition-colors"
-                      >
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => handleRemoveSelected(item.name)}
-                        >
-                          ×
-                        </Button>
-                        <div className="text-2xl mb-1">{item.icon}</div>
-                        <div className="text-sm font-medium">{item.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {item.defaultDays}d
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
 
           {/* Scanner Tab */}
           <TabsContent value="scanner" className="space-y-4">

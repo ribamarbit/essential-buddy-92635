@@ -40,7 +40,8 @@ const statusConfig = {
 
 const ItemCard = ({ id, name, icon, daysLeft, totalDays, status, onAddToCart }: ItemCardProps) => {
   const config = statusConfig[status];
-  const progressValue = ((totalDays - daysLeft) / totalDays) * 100;
+  // Calcular progresso de forma segura
+  const progressValue = totalDays > 0 ? Math.max(0, Math.min(100, ((totalDays - daysLeft) / totalDays) * 100)) : 0;
   
   const getStatusMessage = () => {
     if (status === "urgent") return "Acabando!";

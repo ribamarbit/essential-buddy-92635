@@ -256,12 +256,9 @@ const ProductCatalog = () => {
         </div>
 
         <Tabs defaultValue="catalog" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="catalog">Catálogo</TabsTrigger>
             <TabsTrigger value="add">Adicionar</TabsTrigger>
-            <TabsTrigger value="scanner" onClick={() => window.location.href = '/add-items'}>
-              Scanner
-            </TabsTrigger>
           </TabsList>
           
           {/* Catalog Tab */}
