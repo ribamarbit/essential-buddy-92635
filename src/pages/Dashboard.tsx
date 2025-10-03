@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardStats from "@/components/dashboard-stats";
 import ItemCard from "@/components/item-card";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 interface EssentialItem {
   id: string;
@@ -24,73 +25,119 @@ interface ShoppingItem {
 const Dashboard = () => {
   const { toast } = useToast();
   
-  // Mock data for essential items
-  const [essentialItems] = useState<EssentialItem[]>([
-    {
-      id: "1",
-      name: "Café",
-      icon: "☕",
-      daysLeft: 2,
-      totalDays: 15,
-      status: "urgent",
-      estimatedPrice: 12.90
-    },
-    {
-      id: "2", 
-      name: "Leite",
-      icon: "🥛",
-      daysLeft: 5,
-      totalDays: 7,
-      status: "warning",
-      estimatedPrice: 4.50
-    },
-    {
-      id: "3",
-      name: "Arroz",
-      icon: "🍚",
-      daysLeft: 12,
-      totalDays: 30,
-      status: "success",
-      estimatedPrice: 8.99
-    },
-    {
-      id: "4",
-      name: "Sabão",
-      icon: "🧼",
-      daysLeft: 3,
-      totalDays: 20,
-      status: "warning",
-      estimatedPrice: 6.75
-    },
-    {
-      id: "5",
-      name: "Ração Pet",
-      icon: "🐶",
-      daysLeft: 18,
-      totalDays: 25,
-      status: "success",
-      estimatedPrice: 25.80
-    },
-    {
-      id: "6",
-      name: "Açúcar",
-      icon: "🍯",
-      daysLeft: 1,
-      totalDays: 45,
-      status: "urgent",
-      estimatedPrice: 3.20
-    }
-  ]);
+  // Carrega itens do localStorage
+  const [essentialItems, setEssentialItems] = useState<EssentialItem[]>([]);
+  const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([]);
 
-  const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([
-    {
-      id: "1",
-      name: "Café",
-      icon: "☕",
-      priority: "urgent",
-      estimatedPrice: 12.90
+  // Itens essenciais marcados
+  const essentialItemNames = ['Café', 'Leite', 'Arroz', 'Feijão', 'Açúcar', 'Óleo'];
+
+  useEffect(() => {
+    // Carrega produtos cadastrados
+    const storedProducts = localStorage.getItem('catalogProducts');
+    if (storedProducts) {
+      try {
+        const products = JSON.parse(storedProducts);
+        const items: EssentialItem[] = products.map((product: any) => {
+          const daysLeft = Math.floor(Math.random() * 20) + 1;
+          const totalDays = product.quantity || 30;
+          let status: "success" | "warning" | "urgent" = "success";
+          
+          if (daysLeft <= 2) status = "urgent";
+          else if (daysLeft <= 5) status = "warning";
+          
+          return {
+            id: product.id,
+            name: product.name,
+            icon: product.icon || "📦",
+            daysLeft,
+            totalDays,
+            status,
+            estimatedPrice: product.price
+          };
+        });
+        setEssentialItems(items);
+      } catch (error) {
+        console.error('Erro ao carregar produtos:', error);
+      }
+    } else {
+      // Dados padrão caso não haja produtos cadastrados
+      setEssentialItems([
+        {
+          id: "1",
+          name: "Café",
+          icon: "☕",
+          daysLeft: 2,
+          totalDays: 15,
+          status: "urgent",
+          estimatedPrice: 12.90
+        },
+        {
+          id: "2", 
+          name: "Leite",
+          icon: "🥛",
+          daysLeft: 5,
+          totalDays: 7,
+          status: "warning",
+          estimatedPrice: 4.50
+        },
+        {
+          id: "3",
+          name: "Arroz",
+          icon: "🍚",
+          daysLeft: 12,
+          totalDays: 30,
+          status: "success",
+          estimatedPrice: 8.99
+        }
+      ]);
     }
-  ]);
+
+    // Carrega lista de compras
+    const storedList = localStorage.getItem('shoppingList');
+    if (storedList) {
+      try {
+        setShoppingList(JSON.parse(storedList));
+      } catch (error) {
+        console.error('Erro ao carregar lista:', error);
+      }
+    }
+  }, []);
+
+  // Atualiza localStorage quando essentialItems mudar
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const storedProducts = localStorage.getItem('catalogProducts');
+      if (storedProducts) {
+        try {
+          const products = JSON.parse(storedProducts);
+          const items: EssentialItem[] = products.map((product: any) => {
+            const daysLeft = Math.floor(Math.random() * 20) + 1;
+            const totalDays = product.quantity || 30;
+            let status: "success" | "warning" | "urgent" = "success";
+            
+            if (daysLeft <= 2) status = "urgent";
+            else if (daysLeft <= 5) status = "warning";
+            
+            return {
+              id: product.id,
+              name: product.name,
+              icon: product.icon || "📦",
+              daysLeft,
+              totalDays,
+              status,
+              estimatedPrice: product.price
+            };
+          });
+          setEssentialItems(items);
+        } catch (error) {
+          console.error('Erro ao atualizar produtos:', error);
+        }
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Dashboard stats
   const stats = {
@@ -121,7 +168,9 @@ const Dashboard = () => {
       estimatedPrice: item.estimatedPrice
     };
 
-    setShoppingList(prev => [...prev, newShoppingItem]);
+    const updatedList = [...shoppingList, newShoppingItem];
+    setShoppingList(updatedList);
+    localStorage.setItem('shoppingList', JSON.stringify(updatedList));
     
     toast({
       title: "Adicionado à lista! ✅",
@@ -163,11 +212,19 @@ const Dashboard = () => {
           
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {essentialItems.map((item) => (
-              <ItemCard
-                key={item.id}
-                {...item}
-                onAddToCart={handleAddToCart}
-              />
+              <div key={item.id} className="relative">
+                {essentialItemNames.includes(item.name) && (
+                  <Badge 
+                    className="absolute -top-2 -right-2 z-10 bg-yellow-500 text-yellow-950 hover:bg-yellow-600"
+                  >
+                    ⭐ Essencial
+                  </Badge>
+                )}
+                <ItemCard
+                  {...item}
+                  onAddToCart={handleAddToCart}
+                />
+              </div>
             ))}
           </div>
         </div>

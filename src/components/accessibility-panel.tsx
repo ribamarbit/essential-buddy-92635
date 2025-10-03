@@ -105,7 +105,7 @@ const AccessibilityPanel = () => {
   return (
     <>
       {/* Floating Accessibility Button */}
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-6 left-6 z-40">
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
             <Button

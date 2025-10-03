@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ShoppingList from "@/components/shopping-list";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Share2 } from "lucide-react";
 
 interface ShoppingItem {
   id: string;
@@ -13,33 +15,25 @@ interface ShoppingItem {
 const ShoppingListPage = () => {
   const { toast } = useToast();
   
-  const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([
-    {
-      id: "1",
-      name: "Café",
-      icon: "☕",
-      priority: "urgent",
-      estimatedPrice: 12.90
-    },
-    {
-      id: "2",
-      name: "Açúcar",
-      icon: "🍯",
-      priority: "urgent",
-      estimatedPrice: 3.20
-    },
-    {
-      id: "3",
-      name: "Sabão",
-      icon: "🧼",
-      priority: "warning",
-      estimatedPrice: 6.75
+  const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([]);
+
+  // Carrega lista do localStorage
+  useEffect(() => {
+    const storedList = localStorage.getItem('shoppingList');
+    if (storedList) {
+      try {
+        setShoppingList(JSON.parse(storedList));
+      } catch (error) {
+        console.error('Erro ao carregar lista:', error);
+      }
     }
-  ]);
+  }, []);
 
   const handleRemoveFromCart = (itemId: string) => {
     const item = shoppingList.find(i => i.id === itemId);
-    setShoppingList(prev => prev.filter(i => i.id !== itemId));
+    const updatedList = shoppingList.filter(i => i.id !== itemId);
+    setShoppingList(updatedList);
+    localStorage.setItem('shoppingList', JSON.stringify(updatedList));
     
     if (item) {
       toast({
@@ -70,11 +64,53 @@ const ShoppingListPage = () => {
     // Limpa a lista após 2 segundos
     setTimeout(() => {
       setShoppingList([]);
+      localStorage.setItem('shoppingList', JSON.stringify([]));
       toast({
         title: "Lista limpa!",
         description: "Sua lista foi resetada. Adicione novos itens quando precisar."
       });
     }, 2000);
+  };
+
+  const handleShareList = async () => {
+    if (shoppingList.length === 0) {
+      toast({
+        title: "Lista vazia",
+        description: "Adicione itens à sua lista antes de compartilhar.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const listText = `🛒 Minha Lista de Compras - Concierge\n\n${shoppingList.map((item, index) => 
+      `${index + 1}. ${item.icon} ${item.name} - R$ ${item.estimatedPrice.toFixed(2)}`
+    ).join('\n')}\n\n💰 Total: R$ ${totalValue.toFixed(2)}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Lista de Compras - Concierge',
+          text: listText
+        });
+        toast({
+          title: "Lista compartilhada! ✅",
+          description: "Sua lista foi compartilhada com sucesso."
+        });
+      } else {
+        // Fallback: copiar para área de transferência
+        await navigator.clipboard.writeText(listText);
+        toast({
+          title: "Lista copiada! 📋",
+          description: "A lista foi copiada para a área de transferência."
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro ao compartilhar",
+        description: "Não foi possível compartilhar a lista.",
+        variant: "destructive"
+      });
+    }
   };
 
   const totalValue = shoppingList.reduce((sum, item) => sum + item.estimatedPrice, 0);
@@ -84,7 +120,7 @@ const ShoppingListPage = () => {
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8 space-y-8">
         {/* Header */}
-        <div className="text-center space-y-2">
+        <div className="text-center space-y-4">
           <h1 className="text-3xl font-bold text-foreground">
             Sua Lista de Compras
           </h1>
@@ -94,6 +130,17 @@ const ShoppingListPage = () => {
               : "Sua lista está vazia. Adicione itens do dashboard."
             }
           </p>
+          {shoppingList.length > 0 && (
+            <Button 
+              onClick={handleShareList}
+              variant="outline"
+              size="lg"
+              className="gap-2"
+            >
+              <Share2 className="w-4 h-4" />
+              Compartilhar Lista
+            </Button>
+          )}
         </div>
 
         {/* Stats cards */}

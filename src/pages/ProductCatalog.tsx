@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,11 +23,28 @@ interface Product {
 
 const ProductCatalog = () => {
   const { toast } = useToast();
-  const [products, setProducts] = useState<Product[]>([
-    { id: "1", name: "Arroz", category: "Grãos", price: 4.50, quantity: 5, unit: "kg", icon: "🍚" },
-    { id: "2", name: "Feijão", category: "Grãos", price: 6.20, quantity: 2, unit: "kg", icon: "🫘" },
-    { id: "3", name: "Leite", category: "Laticínios", price: 3.80, quantity: 1, unit: "L", icon: "🥛" },
-  ]);
+  const [products, setProducts] = useState<Product[]>([]);
+
+  // Carrega produtos do localStorage
+  useEffect(() => {
+    const storedProducts = localStorage.getItem('catalogProducts');
+    if (storedProducts) {
+      try {
+        setProducts(JSON.parse(storedProducts));
+      } catch (error) {
+        console.error('Erro ao carregar produtos:', error);
+      }
+    } else {
+      // Dados padrão
+      const defaultProducts = [
+        { id: "1", name: "Arroz", category: "Grãos", price: 4.50, quantity: 5, unit: "kg", icon: "🍚" },
+        { id: "2", name: "Feijão", category: "Grãos", price: 6.20, quantity: 2, unit: "kg", icon: "🫘" },
+        { id: "3", name: "Leite", category: "Laticínios", price: 3.80, quantity: 1, unit: "L", icon: "🥛" },
+      ];
+      setProducts(defaultProducts);
+      localStorage.setItem('catalogProducts', JSON.stringify(defaultProducts));
+    }
+  }, []);
   
   const [newProduct, setNewProduct] = useState({
     name: "", category: "", price: "", quantity: "", unit: "un", icon: ""
@@ -62,7 +79,9 @@ const ProductCatalog = () => {
       icon: newProduct.icon || "📦"
     };
 
-    setProducts(prev => [...prev, product]);
+    const updatedProducts = [...products, product];
+    setProducts(updatedProducts);
+    localStorage.setItem('catalogProducts', JSON.stringify(updatedProducts));
     setNewProduct({ name: "", category: "", price: "", quantity: "", unit: "un", icon: "" });
     
     toast({
@@ -73,7 +92,9 @@ const ProductCatalog = () => {
 
   const handleRemoveProduct = (id: string) => {
     const product = products.find(p => p.id === id);
-    setProducts(prev => prev.filter(p => p.id !== id));
+    const updatedProducts = products.filter(p => p.id !== id);
+    setProducts(updatedProducts);
+    localStorage.setItem('catalogProducts', JSON.stringify(updatedProducts));
     
     toast({
       title: "Produto removido",
@@ -89,9 +110,11 @@ const ProductCatalog = () => {
   const handleSaveEditedProduct = () => {
     if (!editingProduct) return;
     
-    setProducts(prev => prev.map(p => 
+    const updatedProducts = products.map(p => 
       p.id === editingProduct.id ? editingProduct : p
-    ));
+    );
+    setProducts(updatedProducts);
+    localStorage.setItem('catalogProducts', JSON.stringify(updatedProducts));
     
     setIsEditDialogOpen(false);
     setEditingProduct(null);
@@ -233,9 +256,12 @@ const ProductCatalog = () => {
         </div>
 
         <Tabs defaultValue="catalog" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="catalog">Catálogo</TabsTrigger>
             <TabsTrigger value="add">Adicionar</TabsTrigger>
+            <TabsTrigger value="scanner" onClick={() => window.location.href = '/add-items'}>
+              Scanner
+            </TabsTrigger>
           </TabsList>
           
           {/* Catalog Tab */}

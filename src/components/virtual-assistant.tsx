@@ -41,7 +41,7 @@ const VirtualAssistant = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
-      text: "Olá! Sou a Concierge, sua assistente virtual de compras! 👋\n\nComo posso ajudar você hoje? Escolha uma das opções:\n\n1️⃣ Como funciona o aplicativo?\n2️⃣ Como adicionar itens?\n3️⃣ Como gerenciar produtos?\n4️⃣ Como usar a lista de compras?\n5️⃣ Preciso de suporte técnico\n6️⃣ Outras dúvidas\n\nDigite o número da opção ou escreva sua pergunta!",
+      text: "Olá! Sou a Concierge.AI, sua assistente virtual de compras inteligentes! 👋\n\nComo posso ajudar você hoje? Escolha uma das opções:\n\n1️⃣ Como funciona o aplicativo?\n2️⃣ Como adicionar itens?\n3️⃣ Como gerenciar produtos?\n4️⃣ Como usar a lista de compras?\n5️⃣ Preciso de suporte técnico\n6️⃣ Outras dúvidas\n\nDigite o número da opção ou escreva sua pergunta!",
       isBot: true,
       timestamp: new Date()
     }
@@ -136,7 +136,7 @@ const VirtualAssistant = () => {
   };
 
   return (
-    <div className="fixed bottom-24 right-6 z-40">
+    <div className="fixed bottom-6 right-6 z-40">
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger asChild>
           <Button
@@ -151,10 +151,10 @@ const VirtualAssistant = () => {
           <SheetHeader className="p-6 pb-4 border-b">
             <SheetTitle className="flex items-center gap-2">
               <Bot className="w-5 h-5 text-success" />
-              Concierge - Assistente Virtual
+              Concierge.AI - Assistente Virtual
             </SheetTitle>
             <p className="text-sm text-muted-foreground">
-              Sua companheira de compras inteligentes
+              Sua assistente de compras inteligentes
             </p>
           </SheetHeader>
 
@@ -175,7 +175,7 @@ const VirtualAssistant = () => {
                     {message.isBot && (
                       <div className="flex items-center gap-2 mb-1">
                         <Bot className="w-4 h-4" />
-                        <span className="text-xs font-semibold">Concierge</span>
+                        <span className="text-xs font-semibold">Concierge.AI</span>
                       </div>
                     )}
                     <p className="text-sm whitespace-pre-line">{message.text}</p>

@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Camera, Upload } from "lucide-react";
+import { Camera, Upload, Scan } from "lucide-react";
 
 const predefinedItems = [
   { name: "Café", icon: "☕", defaultDays: 15 },
@@ -26,6 +28,7 @@ const AddItems = () => {
   const [customItem, setCustomItem] = useState({ name: "", icon: "", days: "" });
   const [selectedItems, setSelectedItems] = useState<typeof predefinedItems>([]);
   const [isScanning, setIsScanning] = useState(false);
+  const [scanText, setScanText] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleQuickAdd = (item: typeof predefinedItems[0]) => {
@@ -227,11 +230,17 @@ const AddItems = () => {
     }
   };
 
-  const handleManualListInput = () => {
-    const listText = prompt('Cole ou digite sua lista de compras (um item por linha):');
-    if (!listText) return;
+  const handleTextProcess = () => {
+    if (!scanText.trim()) {
+      toast({
+        title: "Texto vazio",
+        description: "Cole o texto da sua lista de compras ou nota fiscal.",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    const detectedItems = extractItemsFromText(listText);
+    const detectedItems = extractItemsFromText(scanText);
     
     if (detectedItems.length > 0) {
       const newItems = detectedItems.filter(
@@ -239,9 +248,10 @@ const AddItems = () => {
       );
       
       setSelectedItems(prev => [...prev, ...newItems]);
+      setScanText("");
       
       toast({
-        title: "✅ Itens adicionados!",
+        title: "✅ Itens processados!",
         description: `${newItems.length} ${newItems.length === 1 ? 'item foi adicionado' : 'itens foram adicionados'} da sua lista.`
       });
     } else {
@@ -266,174 +276,218 @@ const AddItems = () => {
           </p>
         </div>
 
-        {/* Scanner de Lista */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Scanner Inteligente de Lista 📸</CardTitle>
-            <CardDescription>
-              Tire uma foto da sua lista ou cole o texto para adicionar itens automaticamente
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <Button
-                variant="outline"
-                className="h-24 flex flex-col gap-2"
-                onClick={handleCameraCapture}
-                disabled={isScanning}
-              >
-                <Camera className="w-6 h-6" />
-                <span>{isScanning ? 'Processando...' : 'Câmera'}</span>
-              </Button>
-              
-              <Button
-                variant="outline"
-                className="h-24 flex flex-col gap-2"
-                onClick={handleGalleryUpload}
-                disabled={isScanning}
-              >
-                <Upload className="w-6 h-6" />
-                <span>Galeria</span>
-              </Button>
-              
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-            </div>
-            
-            <Button
-              variant="secondary"
-              className="w-full"
-              onClick={handleManualListInput}
-              disabled={isScanning}
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              Colar Lista de Texto
-            </Button>
-            
-            <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
-              <p className="text-xs text-blue-800">
-                💡 <strong>Dica:</strong> O scanner reconhece itens comuns como café, leite, arroz, feijão, óleo, pão, ovos, frango, macarrão, carne, peixe e muito mais!
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <Tabs defaultValue="catalog" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="catalog">Catálogo</TabsTrigger>
+            <TabsTrigger value="add">Adicionar</TabsTrigger>
+            <TabsTrigger value="scanner">Scanner</TabsTrigger>
+          </TabsList>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Quick selection */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Seleção Rápida</CardTitle>
-              <CardDescription>
-                Clique nos itens mais comuns para adicionar
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {predefinedItems.map((item) => (
-                  <Button
-                    key={item.name}
-                    variant={selectedItems.some(i => i.name === item.name) ? "default" : "outline"}
-                    className="h-auto p-4 flex flex-col gap-2"
-                    onClick={() => handleQuickAdd(item)}
-                  >
-                    <span className="text-2xl">{item.icon}</span>
-                    <span className="text-sm">{item.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {item.defaultDays} dias
-                    </span>
+          {/* Catálogo Tab */}
+          <TabsContent value="catalog" className="space-y-4">
+            <div className="grid lg:grid-cols-2 gap-8">
+              {/* Quick selection */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Seleção Rápida</CardTitle>
+                  <CardDescription>
+                    Clique nos itens mais comuns para adicionar
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {predefinedItems.map((item) => (
+                      <Button
+                        key={item.name}
+                        variant={selectedItems.some(i => i.name === item.name) ? "default" : "outline"}
+                        className="h-auto p-4 flex flex-col gap-2"
+                        onClick={() => handleQuickAdd(item)}
+                      >
+                        <span className="text-2xl">{item.icon}</span>
+                        <span className="text-sm">{item.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {item.defaultDays} dias
+                        </span>
+                      </Button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Custom item */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Item Personalizado</CardTitle>
+                  <CardDescription>
+                    Adicione um item que não está na lista
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Nome do Item</Label>
+                    <Input
+                      id="name"
+                      placeholder="Ex: Vitamina, Remédio..."
+                      value={customItem.name}
+                      onChange={(e) => setCustomItem(prev => ({ ...prev, name: e.target.value }))}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="icon">Emoji (opcional)</Label>
+                    <Input
+                      id="icon"
+                      placeholder="Ex: 💊, 🧴..."
+                      value={customItem.icon}
+                      onChange={(e) => setCustomItem(prev => ({ ...prev, icon: e.target.value }))}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="days">Duração média (dias)</Label>
+                    <Input
+                      id="days"
+                      type="number"
+                      placeholder="Ex: 30"
+                      value={customItem.days}
+                      onChange={(e) => setCustomItem(prev => ({ ...prev, days: e.target.value }))}
+                    />
+                  </div>
+                  
+                  <Button onClick={handleCustomAdd} className="w-full">
+                    Adicionar Item Personalizado
                   </Button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
 
-          {/* Custom item */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Item Personalizado</CardTitle>
-              <CardDescription>
-                Adicione um item que não está na lista
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nome do Item</Label>
-                <Input
-                  id="name"
-                  placeholder="Ex: Vitamina, Remédio..."
-                  value={customItem.name}
-                  onChange={(e) => setCustomItem(prev => ({ ...prev, name: e.target.value }))}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="icon">Emoji (opcional)</Label>
-                <Input
-                  id="icon"
-                  placeholder="Ex: 💊, 🧴..."
-                  value={customItem.icon}
-                  onChange={(e) => setCustomItem(prev => ({ ...prev, icon: e.target.value }))}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="days">Duração média (dias)</Label>
-                <Input
-                  id="days"
-                  type="number"
-                  placeholder="Ex: 30"
-                  value={customItem.days}
-                  onChange={(e) => setCustomItem(prev => ({ ...prev, days: e.target.value }))}
-                />
-              </div>
-              
-              <Button onClick={handleCustomAdd} className="w-full">
-                Adicionar Item Personalizado
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+          {/* Adicionar Tab */}
+          <TabsContent value="add" className="space-y-4">
+            {/* Selected items */}
+            {selectedItems.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Seus Itens Selecionados ({selectedItems.length})</CardTitle>
+                  <CardDescription>
+                    Estes são os itens que você vai monitorar
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+                    {selectedItems.map((item) => (
+                      <div
+                        key={item.name}
+                        className="relative group p-3 border rounded-lg text-center hover:bg-muted/50 transition-colors"
+                      >
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleRemoveSelected(item.name)}
+                        >
+                          ×
+                        </Button>
+                        <div className="text-2xl mb-1">{item.icon}</div>
+                        <div className="text-sm font-medium">{item.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {item.defaultDays}d
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
 
-        {/* Selected items */}
-        {selectedItems.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Seus Itens Selecionados ({selectedItems.length})</CardTitle>
-              <CardDescription>
-                Estes são os itens que você vai monitorar
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
-                {selectedItems.map((item) => (
-                  <div
-                    key={item.name}
-                    className="relative group p-3 border rounded-lg text-center hover:bg-muted/50 transition-colors"
+          {/* Scanner Tab */}
+          <TabsContent value="scanner" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Scan className="w-5 h-5 text-primary" />
+                  <CardTitle>Scanner de Lista/Nota Fiscal</CardTitle>
+                </div>
+                <CardDescription>
+                  Cole o texto da sua lista de compras ou nota fiscal para extrair produtos automaticamente
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="scan-text">Texto da Lista/Nota Fiscal</Label>
+                  <Textarea
+                    id="scan-text"
+                    placeholder="Cole aqui o texto da sua lista de compras ou nota fiscal..."
+                    value={scanText}
+                    onChange={(e) => setScanText(e.target.value)}
+                    rows={8}
+                    className="resize-none"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Exemplo de formato: "Arroz 5 kg R$ 4,50" ou "Leite 1L R$3.80"
+                  </p>
+                </div>
+
+                <Button 
+                  onClick={handleTextProcess}
+                  disabled={isScanning || !scanText.trim()}
+                  className="w-full"
+                  size="lg"
+                >
+                  <Scan className="w-4 h-4 mr-2" />
+                  {isScanning ? 'Processando...' : 'Processar Texto'}
+                </Button>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={handleCameraCapture}
+                    disabled={isScanning}
+                    className="flex-1"
                   >
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => handleRemoveSelected(item.name)}
-                    >
-                      ×
-                    </Button>
-                    <div className="text-2xl mb-1">{item.icon}</div>
-                    <div className="text-sm font-medium">{item.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {item.defaultDays}d
+                    <Camera className="w-4 h-4 mr-2" />
+                    Câmera
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    onClick={handleGalleryUpload}
+                    disabled={isScanning}
+                    className="flex-1"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload
+                  </Button>
+                </div>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+
+                <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-100 dark:border-blue-900">
+                  <div className="flex items-start gap-2">
+                    <span className="text-lg">💡</span>
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">Dica de uso:</p>
+                      <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside">
+                        <li>Certifique-se que cada produto esteja em uma linha separada</li>
+                        <li>Inclua o nome, quantidade e preço do produto</li>
+                        <li>Use formatos como: "Produto Quantidade Unidade Preço"</li>
+                        <li>As funções de câmera e upload serão implementadas em breve</li>
+                      </ul>
                     </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
       </main>
     </div>
   );
