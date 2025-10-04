@@ -80,17 +80,19 @@ const AddItems = () => {
   };
 
   const extractItemsFromText = (text: string) => {
-    const lines = text.toLowerCase().split('\n').filter(line => line.trim());
-    const detectedItems: typeof predefinedItems = [];
+    const lines = text.split('\n').filter(line => line.trim());
+    const detectedItems: Array<{ name: string; icon: string; defaultDays: number; quantity?: string; price?: string }> = [];
     
-    // Palavras-chave para detectar itens comuns
+    // Palavras-chave expandidas para detectar itens comuns (incluindo abreviações)
     const keywords: { [key: string]: { name: string; icon: string; days: number } } = {
       'café': { name: 'Café', icon: '☕', days: 15 },
       'cafe': { name: 'Café', icon: '☕', days: 15 },
       'leite': { name: 'Leite', icon: '🥛', days: 7 },
+      'lt': { name: 'Leite', icon: '🥛', days: 7 },
       'arroz': { name: 'Arroz', icon: '🍚', days: 30 },
       'feijão': { name: 'Feijão', icon: '🫘', days: 45 },
       'feijao': { name: 'Feijão', icon: '🫘', days: 45 },
+      'feij': { name: 'Feijão', icon: '🫘', days: 45 },
       'açúcar': { name: 'Açúcar', icon: '🍯', days: 45 },
       'acucar': { name: 'Açúcar', icon: '🍯', days: 45 },
       'óleo': { name: 'Óleo', icon: '🫒', days: 60 },
@@ -111,21 +113,58 @@ const AddItems = () => {
       'carne': { name: 'Carne', icon: '🥩', days: 5 },
       'peixe': { name: 'Peixe', icon: '🐟', days: 3 },
       'farinha': { name: 'Farinha', icon: '🌾', days: 90 },
+      'far': { name: 'Farinha', icon: '🌾', days: 90 },
       'sal': { name: 'Sal', icon: '🧂', days: 180 },
       'manteiga': { name: 'Manteiga', icon: '🧈', days: 14 },
+      'mant': { name: 'Manteiga', icon: '🧈', days: 14 },
       'queijo': { name: 'Queijo', icon: '🧀', days: 15 },
       'iogurte': { name: 'Iogurte', icon: '🥛', days: 7 },
       'sabonete': { name: 'Sabonete', icon: '🧼', days: 30 },
       'shampoo': { name: 'Shampoo', icon: '🧴', days: 45 },
       'condicionador': { name: 'Condicionador', icon: '🧴', days: 45 },
       'pasta': { name: 'Pasta de dente', icon: '🦷', days: 30 },
-      'dente': { name: 'Pasta de dente', icon: '🦷', days: 30 }
+      'dente': { name: 'Pasta de dente', icon: '🦷', days: 30 },
+      'cenoura': { name: 'Cenoura', icon: '🥕', days: 7 },
+      'tomate': { name: 'Tomate', icon: '🍅', days: 5 },
+      'laranja': { name: 'Laranja', icon: '🍊', days: 7 },
+      'manga': { name: 'Manga', icon: '🥭', days: 5 },
+      'banana': { name: 'Banana', icon: '🍌', days: 5 },
+      'suco': { name: 'Suco', icon: '🧃', days: 7 },
+      'biscoito': { name: 'Biscoito', icon: '🍪', days: 30 },
+      'bisc': { name: 'Biscoito', icon: '🍪', days: 30 },
+      'desodorante': { name: 'Desodorante', icon: '🧴', days: 30 },
+      'desod': { name: 'Desodorante', icon: '🧴', days: 30 },
+      'amaciante': { name: 'Amaciante', icon: '🧴', days: 30 },
+      'esponja': { name: 'Esponja', icon: '🧽', days: 15 },
+      'flocos': { name: 'Flocos de Milho', icon: '🌽', days: 45 },
+      'flokao': { name: 'Flocos de Milho', icon: '🌽', days: 45 }
     };
 
+    // Regex para extrair quantidade, unidade e preço
+    const priceRegex = /r?\$?\s*(\d+[.,]\d{2})/i;
+    const quantityRegex = /(\d+[.,]?\d*)\s*(kg|g|l|ml|un|unidade|und|pc)/i;
+
     lines.forEach(line => {
+      const lowerLine = line.toLowerCase();
+      
+      // Extrair preço
+      const priceMatch = line.match(priceRegex);
+      const price = priceMatch ? priceMatch[1].replace(',', '.') : undefined;
+      
+      // Extrair quantidade
+      const quantityMatch = line.match(quantityRegex);
+      const quantity = quantityMatch ? `${quantityMatch[1]} ${quantityMatch[2]}` : undefined;
+      
+      // Detectar produtos por palavras-chave
       Object.entries(keywords).forEach(([key, item]) => {
-        if (line.includes(key) && !detectedItems.some(i => i.name === item.name)) {
-          detectedItems.push({ name: item.name, icon: item.icon, defaultDays: item.days });
+        if (lowerLine.includes(key) && !detectedItems.some(i => i.name === item.name)) {
+          detectedItems.push({ 
+            name: item.name, 
+            icon: item.icon, 
+            defaultDays: item.days,
+            quantity,
+            price
+          });
         }
       });
     });
@@ -184,45 +223,63 @@ const AddItems = () => {
       // Simular processamento de imagem (OCR)
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Texto de exemplo - em produção, isso viria de um serviço de OCR
-      const mockText = `
-        Lista de compras:
-        - Café
-        - Leite
-        - Arroz
-        - Feijão
-        - Óleo
-        - Pão
-      `;
-      
-      const detectedItems = extractItemsFromText(mockText);
-      
-      if (detectedItems.length > 0) {
-        // Adicionar apenas itens que ainda não estão selecionados
-        const newItems = detectedItems.filter(
-          item => !selectedItems.some(selected => selected.name === item.name)
-        );
+      // Simulação de OCR - em produção, isso usaria um serviço de OCR real
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        // Simular extração de texto de nota fiscal
+        const mockText = `
+          CARNE NA ROLA kg 1.866 kg X 17.99 33.44
+          FEIJ D T2 IDEAL 1kg 1 un X 6.60 6.60
+          FAR NAHO POPY 1kg AM 1 un X 6.23 6.23
+          FL HIL FLOKAO 400g 1 un X 1.39 1.39
+          LEITE PO PC 200g LBO 2 un X 6.49 12.98
+          ARROZ B LF T2 TIARAJ 3 un X 4.99 14.97
+          PAO MASSA FINH kg 0.294 kg X 22.00 6.47
+          CENOURA kg 0.620 kg X 3.99 2.47
+          LARANJA PERA kg 1.165 kg X 3.99 3.48
+          MANGA PALMER kg 1.655 kg X 7.99 11.30
+          TOMATE LONG VIDA kg 0.315 kg X 8.99 2.82
+          SUCO D VAL 1.5L UVA 1 un X 8.99 8.99
+        `;
         
-        setSelectedItems(prev => [...prev, ...newItems]);
+        const detectedItems = extractItemsFromText(mockText);
         
-        toast({
-          title: "✅ Itens detectados!",
-          description: `${newItems.length} ${newItems.length === 1 ? 'item foi adicionado' : 'itens foram adicionados'} da sua lista.`
-        });
-      } else {
-        toast({
-          title: "Nenhum item detectado",
-          description: "Tente uma imagem mais clara ou adicione os itens manualmente.",
-          variant: "destructive"
-        });
-      }
+        if (detectedItems.length > 0) {
+          const newItems = detectedItems.filter(
+            item => !selectedItems.some(selected => selected.name === item.name)
+          );
+          
+          setSelectedItems(prev => [...prev, ...newItems.map(item => ({
+            name: item.name,
+            icon: item.icon,
+            defaultDays: item.defaultDays
+          }))]);
+          
+          toast({
+            title: "✅ Itens detectados!",
+            description: `${newItems.length} ${newItems.length === 1 ? 'item foi adicionado' : 'itens foram adicionados'} da sua nota fiscal.`
+          });
+        } else {
+          toast({
+            title: "Nenhum item detectado",
+            description: "Tente uma imagem mais clara ou adicione os itens manualmente.",
+            variant: "destructive"
+          });
+        }
+        
+        setIsScanning(false);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      };
+      
+      reader.readAsDataURL(file);
     } catch (error) {
       toast({
         title: "Erro ao processar imagem",
         description: "Não foi possível ler a imagem. Tente novamente.",
         variant: "destructive"
       });
-    } finally {
       setIsScanning(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';

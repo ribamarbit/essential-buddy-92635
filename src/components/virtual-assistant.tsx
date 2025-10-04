@@ -77,6 +77,21 @@ const VirtualAssistant = () => {
   const getBotResponse = (userMessage: string): string => {
     const lowerMessage = userMessage.trim().toLowerCase();
     
+    // Reconhecer respostas afirmativas (sim)
+    if (lowerMessage.match(/^(sim|s|yes|y|claro|com certeza|isso|exato|correto)$/)) {
+      return "Que bom! 😊 Fico feliz em poder ajudar. Estou à disposição se precisar de mais alguma coisa!";
+    }
+    
+    // Reconhecer respostas negativas (não)
+    if (lowerMessage.match(/^(não|nao|n|no|negativo|de jeito nenhum|nunca)$/)) {
+      return "Tudo bem! Estou à disposição sempre que precisar. 😊 Se tiver alguma dúvida, é só me chamar!";
+    }
+    
+    // Reconhecer agradecimentos
+    if (lowerMessage.match(/(obrigad|valeu|thanks|brigad)/)) {
+      return "Por nada! 💙 Estou aqui para ajudar sempre que precisar. Tenha um ótimo dia!";
+    }
+    
     // Check for number options first (1-6)
     if (lowerMessage.match(/^[1-6]$/)) {
       return quickResponses[lowerMessage];
