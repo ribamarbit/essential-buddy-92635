@@ -149,12 +149,19 @@ const Login = ({ onLogin }: LoginProps) => {
 
         toast({
           title: "Conta criada com sucesso! ✅",
-          description: "Verifique seu email para confirmar sua conta antes de fazer login."
+          description: "Você já pode fazer login com suas credenciais."
         });
         
-        // Resetar formulário e voltar para tela de login
-        setIsLogin(true);
-        resetForm();
+        // Fazer login automaticamente após cadastro bem-sucedido
+        if (data.session) {
+          setTimeout(() => {
+            onLogin();
+          }, 500);
+        } else {
+          // Se não houver sessão, voltar para tela de login
+          setIsLogin(true);
+          resetForm();
+        }
       }
     } catch (error: any) {
       console.error("Erro na autenticação:", error);

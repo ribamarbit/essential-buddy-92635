@@ -36,11 +36,22 @@ const Profile = () => {
           .from('profiles')
           .select('nome_completo, login')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
-        if (error) throw error;
+        if (error) {
+          console.error("Erro ao buscar perfil:", error);
+          throw error;
+        }
 
-        setProfile(profileData);
+        if (profileData) {
+          setProfile(profileData);
+        } else {
+          // Se não houver perfil, usar dados do user metadata
+          setProfile({
+            nome_completo: user.user_metadata?.nome_completo || '',
+            login: user.user_metadata?.login || ''
+          });
+        }
       } catch (error: any) {
         console.error("Erro ao carregar perfil:", error);
         toast({
