@@ -34,26 +34,16 @@ const Dashboard = () => {
   const essentialItemNames = ['Café', 'Leite', 'Arroz', 'Feijão', 'Açúcar', 'Óleo'];
 
   useEffect(() => {
-    // Carrega produtos cadastrados
-    const storedProducts = localStorage.getItem('catalogProducts');
-    const storedTimestamps = localStorage.getItem('productTimestamps');
+    // Carrega itens essenciais do Dashboard (adicionados via "Cadastrar Itens")
+    const storedEssentials = localStorage.getItem('dashboardEssentials');
     
-    if (storedProducts) {
+    if (storedEssentials) {
       try {
-        const products = JSON.parse(storedProducts);
-        const timestamps = storedTimestamps ? JSON.parse(storedTimestamps) : {};
+        const essentials = JSON.parse(storedEssentials);
         
-        const items: EssentialItem[] = products.map((product: any) => {
-          // Usa timestamp fixo armazenado ou cria um novo
-          const startDate = timestamps[product.id] || Date.now();
-          
-          // Se não existia timestamp, salva o novo
-          if (!timestamps[product.id]) {
-            timestamps[product.id] = startDate;
-          }
-          
-          // Calcular dias restantes baseado na quantidade e tempo decorrido
-          const totalDays = Math.max(30, product.quantity * 2 || 30);
+        const items: EssentialItem[] = essentials.map((item: any) => {
+          const startDate = item.startDate || Date.now();
+          const totalDays = item.totalDays || 30;
           const daysPassed = Math.floor((Date.now() - startDate) / (1000 * 60 * 60 * 24));
           const daysLeft = Math.max(0, totalDays - daysPassed);
           
@@ -62,26 +52,24 @@ const Dashboard = () => {
           else if (daysLeft <= 5) status = "warning";
           
           return {
-            id: product.id,
-            name: product.name,
-            icon: product.icon || "📦",
+            id: item.id || Date.now().toString(),
+            name: item.name,
+            icon: item.icon || "📦",
             daysLeft,
             totalDays,
             status,
-            estimatedPrice: product.price,
+            estimatedPrice: item.estimatedPrice || 5.0,
             startDate
           };
         });
         
-        // Salva timestamps atualizados
-        localStorage.setItem('productTimestamps', JSON.stringify(timestamps));
         setEssentialItems(items);
       } catch (error) {
-        console.error('Erro ao carregar produtos:', error);
+        console.error('Erro ao carregar itens essenciais:', error);
       }
     } else {
-      // Dados padrão caso não haja produtos cadastrados
-      const defaultStartDate = Date.now() - (13 * 24 * 60 * 60 * 1000); // 13 dias atrás
+      // Dados padrão caso não haja itens cadastrados
+      const defaultStartDate = Date.now() - (13 * 24 * 60 * 60 * 1000);
       setEssentialItems([
         {
           id: "1",
@@ -127,21 +115,18 @@ const Dashboard = () => {
     }
   }, []);
 
-  // Atualiza o cálculo de dias apenas uma vez por dia (não constantemente)
+  // Atualiza o cálculo de dias apenas uma vez por hora
   useEffect(() => {
-    // Atualiza apenas a cada hora para recalcular dias restantes
     const interval = setInterval(() => {
-      const storedProducts = localStorage.getItem('catalogProducts');
-      const storedTimestamps = localStorage.getItem('productTimestamps');
+      const storedEssentials = localStorage.getItem('dashboardEssentials');
       
-      if (storedProducts && storedTimestamps) {
+      if (storedEssentials) {
         try {
-          const products = JSON.parse(storedProducts);
-          const timestamps = JSON.parse(storedTimestamps);
+          const essentials = JSON.parse(storedEssentials);
           
-          const items: EssentialItem[] = products.map((product: any) => {
-            const startDate = timestamps[product.id] || Date.now();
-            const totalDays = Math.max(30, product.quantity * 2 || 30);
+          const items: EssentialItem[] = essentials.map((item: any) => {
+            const startDate = item.startDate || Date.now();
+            const totalDays = item.totalDays || 30;
             const daysPassed = Math.floor((Date.now() - startDate) / (1000 * 60 * 60 * 24));
             const daysLeft = Math.max(0, totalDays - daysPassed);
             
@@ -150,22 +135,22 @@ const Dashboard = () => {
             else if (daysLeft <= 5) status = "warning";
             
             return {
-              id: product.id,
-              name: product.name,
-              icon: product.icon || "📦",
+              id: item.id || Date.now().toString(),
+              name: item.name,
+              icon: item.icon || "📦",
               daysLeft,
               totalDays,
               status,
-              estimatedPrice: product.price,
+              estimatedPrice: item.estimatedPrice || 5.0,
               startDate
             };
           });
           setEssentialItems(items);
         } catch (error) {
-          console.error('Erro ao atualizar produtos:', error);
+          console.error('Erro ao atualizar itens:', error);
         }
       }
-    }, 3600000); // Atualiza apenas a cada hora (não a cada 3 segundos)
+    }, 3600000); // Atualiza a cada hora
 
     return () => clearInterval(interval);
   }, []);

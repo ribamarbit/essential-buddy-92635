@@ -58,25 +58,63 @@ const UserGuide = ({ isOpen, onClose }: UserGuideProps) => {
       )
     },
     {
-      title: "Catálogo de Produtos 📦",
-      description: "Gerencie todos os seus produtos em um só lugar",
+      title: "Cadastrar Itens Essenciais 🏷️",
+      description: "Adicione os produtos que você consome regularmente",
       icon: <Plus className="w-12 h-12 text-warning" />,
       content: (
         <div className="space-y-4">
           <p className="text-muted-foreground">
-            No catálogo você pode adicionar, editar e organizar todos os seus produtos:
+            Use "Cadastrar Itens" para adicionar produtos que aparecem no Dashboard:
           </p>
           <div className="space-y-3">
             <div className="bg-muted/50 p-3 rounded-lg">
-              <h4 className="font-semibold mb-2">🏷️ Adicionar Produtos</h4>
+              <h4 className="font-semibold mb-2">📦 Seleção Rápida</h4>
               <p className="text-sm text-muted-foreground">
-                Cadastre manualmente com nome, categoria, preço e quantidade
+                Escolha entre itens comuns como café, leite, arroz, etc.
+              </p>
+            </div>
+            <div className="bg-muted/50 p-3 rounded-lg">
+              <h4 className="font-semibold mb-2">✏️ Item Personalizado</h4>
+              <p className="text-sm text-muted-foreground">
+                Adicione itens customizados com nome e duração média
+              </p>
+            </div>
+            <div className="bg-muted/50 p-3 rounded-lg">
+              <h4 className="font-semibold mb-2">📊 Aparecem no Dashboard</h4>
+              <p className="text-sm text-muted-foreground">
+                Os itens salvos aqui aparecem como Itens Essenciais no Dashboard
+              </p>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      title: "Catálogo de Produtos 🛒",
+      description: "Gerencie produtos para adicionar à Lista de Compras",
+      icon: <ShoppingCart className="w-12 h-12 text-success" />,
+      content: (
+        <div className="space-y-4">
+          <p className="text-muted-foreground">
+            O Catálogo permite gerenciar produtos para sua Lista de Compras:
+          </p>
+          <div className="space-y-3">
+            <div className="bg-muted/50 p-3 rounded-lg">
+              <h4 className="font-semibold mb-2">➕ Adicionar Produtos</h4>
+              <p className="text-sm text-muted-foreground">
+                Cadastre produtos com nome, categoria, preço e quantidade
+              </p>
+            </div>
+            <div className="bg-muted/50 p-3 rounded-lg">
+              <h4 className="font-semibold mb-2">🛒 Adicionar à Lista</h4>
+              <p className="text-sm text-muted-foreground">
+                Clique em "Adicionar à Lista" para enviar produtos para sua Lista de Compras
               </p>
             </div>
             <div className="bg-muted/50 p-3 rounded-lg">
               <h4 className="font-semibold mb-2">✏️ Editar e Remover</h4>
               <p className="text-sm text-muted-foreground">
-                Clique nos ícones de edição ou lixeira para gerenciar produtos
+                Gerencie seus produtos com os botões de edição e exclusão
               </p>
             </div>
           </div>
@@ -85,30 +123,36 @@ const UserGuide = ({ isOpen, onClose }: UserGuideProps) => {
     },
     {
       title: "Scanner Inteligente 📱",
-      description: "Importe produtos automaticamente de notas fiscais",
+      description: "Detecta produtos, quantidades e preços de notas fiscais",
       icon: <Scan className="w-12 h-12 text-urgent" />,
       content: (
         <div className="space-y-4">
           <p className="text-muted-foreground">
-            Use o scanner para importar produtos de forma automática:
+            O scanner reconhece automaticamente produtos em notas fiscais:
           </p>
           <div className="space-y-3">
             <div className="bg-urgent/5 p-3 rounded-lg border border-urgent/20">
               <h4 className="font-semibold text-urgent mb-2">📸 Câmera</h4>
               <p className="text-sm text-muted-foreground">
-                Fotografe notas fiscais para extrair produtos automaticamente
+                Fotografe notas fiscais - o sistema extrai nome, quantidade e preço
               </p>
             </div>
             <div className="bg-urgent/5 p-3 rounded-lg border border-urgent/20">
               <h4 className="font-semibold text-urgent mb-2">📄 Upload</h4>
               <p className="text-sm text-muted-foreground">
-                Envie imagens de notas fiscais do seu dispositivo
+                Envie imagens de cupons fiscais do seu celular
               </p>
             </div>
             <div className="bg-urgent/5 p-3 rounded-lg border border-urgent/20">
               <h4 className="font-semibold text-urgent mb-2">📋 Texto</h4>
               <p className="text-sm text-muted-foreground">
-                Cole texto de cupons fiscais para processamento automático
+                Cole texto de notas - reconhece até abreviações (ex: "lt" = leite)
+              </p>
+            </div>
+            <div className="bg-urgent/5 p-3 rounded-lg border border-urgent/20">
+              <h4 className="font-semibold text-urgent mb-2">✅ Itens vão pro Dashboard</h4>
+              <p className="text-sm text-muted-foreground">
+                Produtos detectados são salvos automaticamente no Dashboard
               </p>
             </div>
           </div>
@@ -157,12 +201,12 @@ const UserGuide = ({ isOpen, onClose }: UserGuideProps) => {
             Agora você está pronto para aproveitar todos os recursos.
           </p>
           <div className="bg-gradient-success p-4 rounded-lg text-success-foreground">
-            <h4 className="font-bold mb-2">Próximos passos:</h4>
+            <h4 className="font-bold mb-2">Resumo do fluxo:</h4>
             <ol className="text-sm space-y-1 text-left">
-              <li>1. Adicione alguns produtos no catálogo</li>
-              <li>2. Crie sua primeira lista de compras</li>
-              <li>3. Experimente o scanner de notas fiscais</li>
-              <li>4. Explore as configurações de acessibilidade</li>
+              <li>1. <strong>Cadastrar Itens</strong> → adiciona ao <strong>Dashboard</strong></li>
+              <li>2. <strong>Produtos</strong> → adiciona à <strong>Lista de Compras</strong></li>
+              <li>3. Use o <strong>Scanner</strong> para importar de notas fiscais</li>
+              <li>4. Configure a <strong>Acessibilidade</strong> conforme preferir</li>
             </ol>
           </div>
           <p className="text-sm text-muted-foreground">

@@ -329,24 +329,32 @@ const AddItems = () => {
       return;
     }
 
-    // Salvar no Dashboard (productTimestamps)
-    const existingData = localStorage.getItem('productTimestamps');
-    const currentItems = existingData ? JSON.parse(existingData) : {};
+    // Salvar no Dashboard como itens essenciais
+    const existingData = localStorage.getItem('dashboardEssentials');
+    const currentItems = existingData ? JSON.parse(existingData) : [];
     
-    selectedItems.forEach(item => {
-      currentItems[item.name] = {
-        startDate: new Date().toISOString(),
-        totalDays: item.defaultDays,
-        icon: item.icon,
-        estimatedPrice: 5.0
-      };
+    const newItems = selectedItems.map(item => ({
+      id: Date.now().toString() + Math.random(),
+      name: item.name,
+      icon: item.icon,
+      startDate: Date.now(),
+      totalDays: item.defaultDays,
+      estimatedPrice: 5.0
+    }));
+    
+    // Evita duplicados
+    const uniqueItems = [...currentItems];
+    newItems.forEach(newItem => {
+      if (!uniqueItems.some(existing => existing.name === newItem.name)) {
+        uniqueItems.push(newItem);
+      }
     });
     
-    localStorage.setItem('productTimestamps', JSON.stringify(currentItems));
+    localStorage.setItem('dashboardEssentials', JSON.stringify(uniqueItems));
     
     toast({
       title: "Itens salvos no Dashboard! 🎉",
-      description: `${selectedItems.length} ${selectedItems.length === 1 ? 'item foi adicionado' : 'itens foram adicionados'} aos itens essenciais do Dashboard.`
+      description: `${selectedItems.length} ${selectedItems.length === 1 ? 'item foi adicionado' : 'itens foram adicionados'} aos itens essenciais.`
     });
     
     setSelectedItems([]);
