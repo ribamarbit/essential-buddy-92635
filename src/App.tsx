@@ -15,62 +15,54 @@ import Header from "./components/header";
 import AccessibilityPanel from "./components/accessibility-panel";
 import UserGuide from "./components/user-guide";
 import VirtualAssistant from "./components/virtual-assistant";
-import { validateAuth, setAuth, clearAuth, renewSession } from "./utils/authValidation";
+import { supabase } from "@/integrations/supabase/client";
+import type { User, Session } from "@supabase/supabase-js";
 
 const queryClient = new QueryClient();
 
 const App = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [showUserGuide, setShowUserGuide] = useState(false);
   const [isValidating, setIsValidating] = useState(true);
 
-  // Validação de autenticação ao carregar
+  // Configurar autenticação com Supabase
   useEffect(() => {
-    const checkAuth = () => {
-      const isValid = validateAuth();
-      setIsLoggedIn(isValid);
-      setIsValidating(false);
-    };
-
-    checkAuth();
-
-    // Renova sessão periodicamente
-    const interval = setInterval(() => {
-      if (validateAuth()) {
-        renewSession();
-      } else {
-        setIsLoggedIn(false);
+    // Configurar listener de mudanças de auth PRIMEIRO
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setIsValidating(false);
+        
+        // Mostrar guia para novos usuários
+        if (session?.user && !localStorage.getItem('hasSeenGuide')) {
+          setTimeout(() => {
+            setShowUserGuide(true);
+          }, 500);
+        }
       }
-    }, 60000); // Verifica a cada minuto
+    );
 
-    return () => clearInterval(interval);
+    // DEPOIS verificar se já existe uma sessão
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsValidating(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  // Proteção contra manipulação do DOM
-  useEffect(() => {
-    if (!isValidating && !isLoggedIn) {
-      // Remove qualquer tentativa de bypass via console
-      Object.defineProperty(window, 'isLoggedIn', {
-        get: () => false,
-        set: () => false,
-        configurable: false
-      });
-    }
-  }, [isLoggedIn, isValidating]);
-
   const handleLogin = () => {
-    setAuth();
-    setIsLoggedIn(true);
-    
-    // Show guide for new users
-    if (!localStorage.getItem('hasSeenGuide')) {
-      setShowUserGuide(true);
-    }
+    // O login é gerenciado pelo Supabase Auth
+    // Esta função é mantida para compatibilidade
   };
 
-  const handleLogout = () => {
-    clearAuth();
-    setIsLoggedIn(false);
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setSession(null);
   };
 
   const handleCloseGuide = () => {
@@ -91,7 +83,7 @@ const App = () => {
       );
     }
 
-    if (!validateAuth()) {
+    if (!session || !user) {
       return <Navigate to="/login" replace />;
     }
 
@@ -113,7 +105,7 @@ const App = () => {
     );
   }
 
-  if (!isLoggedIn) {
+  if (!session || !user) {
     return (
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>

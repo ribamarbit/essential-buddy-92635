@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, ShoppingCart } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LoginProps {
   onLogin: () => void;
@@ -16,10 +17,13 @@ const Login = ({ onLogin }: LoginProps) => {
   const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [formData, setFormData] = useState({
+    nomeCompleto: "",
+    login: "",
     email: "",
     password: "",
     confirmPassword: ""
   });
+  const [loading, setLoading] = useState(false);
 
   const validatePassword = (password: string): { isValid: boolean; message: string } => {
     if (password.length < 8) {
@@ -40,88 +44,133 @@ const Login = ({ onLogin }: LoginProps) => {
     return { isValid: true, message: "" };
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     
-    if (isForgotPassword) {
-      if (!formData.email) {
+    try {
+      if (isForgotPassword) {
+        if (!formData.email) {
+          toast({
+            title: "Erro",
+            description: "Por favor, insira seu email.",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
+          redirectTo: `${window.location.origin}/`
+        });
+
+        if (error) throw error;
+        
+        toast({
+          title: "Email enviado! ✅",
+          description: "Instruções para redefinir a senha foram enviadas para seu email."
+        });
+        setIsForgotPassword(false);
+        return;
+      }
+
+      if (!formData.email || !formData.password) {
         toast({
           title: "Erro",
-          description: "Por favor, insira seu email.",
+          description: "Por favor, preencha todos os campos.",
           variant: "destructive"
         });
         return;
       }
-      
-      toast({
-        title: "Email enviado! ✅",
-        description: "Instruções para redefinir a senha foram enviadas para seu email."
-      });
-      setIsForgotPassword(false);
-      return;
-    }
 
-    if (!formData.email || !formData.password) {
-      toast({
-        title: "Erro",
-        description: "Por favor, preencha todos os campos.",
-        variant: "destructive"
-      });
-      return;
-    }
+      // Login
+      if (isLogin) {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password
+        });
 
-    // Validar senha forte ao criar conta
-    if (!isLogin) {
-      const passwordValidation = validatePassword(formData.password);
-      if (!passwordValidation.isValid) {
+        if (error) throw error;
+
         toast({
-          title: "Senha fraca",
-          description: passwordValidation.message,
-          variant: "destructive"
+          title: "Login realizado com sucesso! ✅",
+          description: "Bem-vindo de volta!"
         });
-        return;
+        
+        setTimeout(() => {
+          onLogin();
+        }, 500);
+      } 
+      // Cadastro
+      else {
+        // Validações para cadastro
+        if (!formData.nomeCompleto || !formData.login) {
+          toast({
+            title: "Erro",
+            description: "Por favor, preencha todos os campos.",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        // Validar senha forte
+        const passwordValidation = validatePassword(formData.password);
+        if (!passwordValidation.isValid) {
+          toast({
+            title: "Senha fraca",
+            description: passwordValidation.message,
+            variant: "destructive"
+          });
+          return;
+        }
+
+        if (formData.password !== formData.confirmPassword) {
+          toast({
+            title: "Erro",
+            description: "As senhas não coincidem.",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        // Criar conta no Supabase
+        const { data, error } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/`,
+            data: {
+              nome_completo: formData.nomeCompleto,
+              login: formData.login
+            }
+          }
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "Conta criada com sucesso! ✅",
+          description: "Você já pode fazer login com suas credenciais."
+        });
+        
+        // Fazer login automaticamente após cadastro
+        setTimeout(() => {
+          onLogin();
+        }, 500);
       }
-    }
-
-    if (!isLogin && formData.password !== formData.confirmPassword) {
+    } catch (error: any) {
+      console.error("Erro na autenticação:", error);
       toast({
         title: "Erro",
-        description: "As senhas não coincidem.",
+        description: error.message || "Ocorreu um erro. Tente novamente.",
         variant: "destructive"
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    // Simular validação de login
-    if (isLogin && (formData.email !== "user@test.com" || formData.password !== "123456")) {
-      toast({
-        title: "Erro",
-        description: "Login e/ou senha errados",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Mensagem diferente para criação de conta incluindo confirmação por e-mail
-    if (!isLogin) {
-      toast({
-        title: "Conta criada com sucesso! ✅",
-        description: "Um e-mail de confirmação foi enviado para " + formData.email
-      });
-    } else {
-      toast({
-        title: "Login realizado com sucesso! ✅",
-        description: "Bem-vindo de volta!"
-      });
-    }
-    
-    setTimeout(() => {
-      onLogin();
-    }, 1000);
   };
 
   const resetForm = () => {
-    setFormData({ email: "", password: "", confirmPassword: "" });
+    setFormData({ nomeCompleto: "", login: "", email: "", password: "", confirmPassword: "" });
     setIsForgotPassword(false);
   };
 
@@ -150,6 +199,36 @@ const Login = ({ onLogin }: LoginProps) => {
         
         <CardContent className="space-y-4 px-8 pb-8">
           <form onSubmit={handleSubmit} className="space-y-5">
+            {!isLogin && !isForgotPassword && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="nomeCompleto" className="text-sm font-semibold text-gray-700">Nome Completo</Label>
+                  <Input
+                    id="nomeCompleto"
+                    type="text"
+                    placeholder="Seu nome completo"
+                    value={formData.nomeCompleto}
+                    onChange={(e) => setFormData(prev => ({ ...prev, nomeCompleto: e.target.value }))}
+                    className="h-12 text-base rounded-xl border-gray-200"
+                    disabled={loading}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="login" className="text-sm font-semibold text-gray-700">Login (nome de usuário)</Label>
+                  <Input
+                    id="login"
+                    type="text"
+                    placeholder="seu_usuario"
+                    value={formData.login}
+                    onChange={(e) => setFormData(prev => ({ ...prev, login: e.target.value }))}
+                    className="h-12 text-base rounded-xl border-gray-200"
+                    disabled={loading}
+                  />
+                </div>
+              </>
+            )}
+            
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-semibold text-gray-700">Email</Label>
               <Input
@@ -159,6 +238,7 @@ const Login = ({ onLogin }: LoginProps) => {
                 value={formData.email}
                 onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                 className="h-12 text-base rounded-xl border-gray-200"
+                disabled={loading}
               />
             </div>
             
@@ -173,6 +253,7 @@ const Login = ({ onLogin }: LoginProps) => {
                     value={formData.password}
                     onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
                     className="h-12 text-base rounded-xl border-gray-200"
+                    disabled={loading}
                   />
                   <Button
                     type="button"
@@ -206,6 +287,7 @@ const Login = ({ onLogin }: LoginProps) => {
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
                   className="h-12 text-base rounded-xl border-gray-200"
+                  disabled={loading}
                 />
               </div>
             )}
@@ -214,8 +296,9 @@ const Login = ({ onLogin }: LoginProps) => {
               type="submit" 
               className="w-full h-14 text-base font-semibold rounded-xl mt-2"
               style={{ background: '#3b82f6' }}
+              disabled={loading}
             >
-              {isForgotPassword ? "Enviar instruções" : isLogin ? "Entrar" : "Criar Conta"}
+              {loading ? "Processando..." : isForgotPassword ? "Enviar instruções" : isLogin ? "Entrar" : "Criar Conta"}
             </Button>
           </form>
           
@@ -285,13 +368,6 @@ const Login = ({ onLogin }: LoginProps) => {
             )}
           </div>
           
-          {isLogin && (
-            <div className="mt-4 p-3 rounded-lg" style={{ backgroundColor: '#eff6ff' }}>
-              <p className="text-xs text-center" style={{ color: '#1e40af' }}>
-                💡 <strong>Demo:</strong> user@test.com / 123456
-              </p>
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>
