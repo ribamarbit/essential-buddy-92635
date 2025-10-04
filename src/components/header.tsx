@@ -207,6 +207,17 @@ const Header = ({ notificationCount = 0, onLogout, onShowGuide }: HeaderProps) =
                 Suporte
               </Button>
             </Link>
+            
+            <Link to="/perfil">
+              <Button 
+                variant={isActive("/perfil") ? "default" : "ghost"} 
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <User className="w-4 h-4" />
+                Perfil
+              </Button>
+            </Link>
           </nav>
 
           {/* Navigation actions */}
@@ -273,6 +284,16 @@ const Header = ({ notificationCount = 0, onLogout, onShowGuide }: HeaderProps) =
                       >
                         <HeadphonesIcon className="w-4 h-4 mr-2" />
                         Suporte
+                      </Button>
+                    </Link>
+                    
+                    <Link to="/perfil" className="w-full">
+                      <Button 
+                        variant={isActive("/perfil") ? "default" : "ghost"} 
+                        className="w-full justify-start"
+                      >
+                        <User className="w-4 h-4 mr-2" />
+                        Perfil
                       </Button>
                     </Link>
                   </div>

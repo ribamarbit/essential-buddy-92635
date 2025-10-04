@@ -11,6 +11,7 @@ import ShoppingListPage from "./pages/ShoppingListPage";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Support from "./pages/Support";
+import Profile from "./pages/Profile";
 import Header from "./components/header";
 import AccessibilityPanel from "./components/accessibility-panel";
 import UserGuide from "./components/user-guide";
@@ -137,6 +138,7 @@ const App = () => {
               <Route path="/products" element={<ProtectedRoute><ProductCatalog /></ProtectedRoute>} />
               <Route path="/shopping-list" element={<ProtectedRoute><ShoppingListPage /></ProtectedRoute>} />
               <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
+              <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<ProtectedRoute><NotFound /></ProtectedRoute>} />
             </Routes>
