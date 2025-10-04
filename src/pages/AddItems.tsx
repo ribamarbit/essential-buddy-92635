@@ -320,6 +320,38 @@ const AddItems = () => {
     }
   };
 
+  const handleSaveItems = () => {
+    if (selectedItems.length === 0) {
+      toast({
+        title: "Nenhum item selecionado",
+        description: "Selecione pelo menos um item para salvar."
+      });
+      return;
+    }
+
+    // Salvar no Dashboard (productTimestamps)
+    const existingData = localStorage.getItem('productTimestamps');
+    const currentItems = existingData ? JSON.parse(existingData) : {};
+    
+    selectedItems.forEach(item => {
+      currentItems[item.name] = {
+        startDate: new Date().toISOString(),
+        totalDays: item.defaultDays,
+        icon: item.icon,
+        estimatedPrice: 5.0
+      };
+    });
+    
+    localStorage.setItem('productTimestamps', JSON.stringify(currentItems));
+    
+    toast({
+      title: "Itens salvos no Dashboard! 🎉",
+      description: `${selectedItems.length} ${selectedItems.length === 1 ? 'item foi adicionado' : 'itens foram adicionados'} aos itens essenciais do Dashboard.`
+    });
+    
+    setSelectedItems([]);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8 space-y-8">
@@ -505,6 +537,44 @@ const AddItems = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Selected Items Summary */}
+        {selectedItems.length > 0 && (
+          <Card className="border-primary/50">
+            <CardHeader>
+              <CardTitle>Itens Selecionados ({selectedItems.length})</CardTitle>
+              <CardDescription>
+                Estes itens serão adicionados ao Dashboard como itens essenciais
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                {selectedItems.map((item) => (
+                  <div
+                    key={item.name}
+                    className="flex items-center gap-2 bg-muted px-3 py-2 rounded-lg"
+                  >
+                    <span>{item.icon}</span>
+                    <span className="text-sm font-medium">{item.name}</span>
+                    <span className="text-xs text-muted-foreground">({item.defaultDays}d)</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 ml-1"
+                      onClick={() => handleRemoveSelected(item.name)}
+                    >
+                      ✕
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              
+              <Button onClick={handleSaveItems} className="w-full" size="lg">
+                Salvar no Dashboard
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
       </main>
     </div>

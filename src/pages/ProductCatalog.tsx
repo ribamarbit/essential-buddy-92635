@@ -125,6 +125,36 @@ const ProductCatalog = () => {
     });
   };
 
+  const handleAddToShoppingList = (product: Product) => {
+    const shoppingItem = {
+      id: Date.now().toString(),
+      name: product.name,
+      icon: product.icon || "📦",
+      priority: "medium" as const,
+      estimatedPrice: product.price
+    };
+
+    const existingList = localStorage.getItem('shoppingList');
+    const currentList = existingList ? JSON.parse(existingList) : [];
+    
+    // Verifica se já existe
+    if (currentList.some((item: any) => item.name === product.name)) {
+      toast({
+        title: "Item já na lista",
+        description: `${product.name} já está na sua Lista de Compras.`
+      });
+      return;
+    }
+
+    const updatedList = [...currentList, shoppingItem];
+    localStorage.setItem('shoppingList', JSON.stringify(updatedList));
+    
+    toast({
+      title: "Adicionado à Lista de Compras! 🛒",
+      description: `${product.name} foi adicionado à sua Lista de Compras.`
+    });
+  };
+
   const handleScanProcess = () => {
     if (!scanText.trim()) {
       toast({
@@ -267,7 +297,7 @@ const ProductCatalog = () => {
               <CardHeader>
                 <CardTitle>Produtos Cadastrados</CardTitle>
                 <CardDescription>
-                  Lista completa dos seus produtos com preços e quantidades
+                  Clique em "Adicionar à Lista" para enviar produtos para sua Lista de Compras
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -298,6 +328,15 @@ const ProductCatalog = () => {
                         </div>
                         
                         <div className="flex items-center space-x-2">
+                          <Button 
+                            variant="default" 
+                            size="sm"
+                            onClick={() => handleAddToShoppingList(product)}
+                          >
+                            <Plus className="w-4 h-4 mr-1" />
+                            Adicionar à Lista
+                          </Button>
+                          
                           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                             <DialogTrigger asChild>
                               <Button 
