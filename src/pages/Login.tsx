@@ -301,6 +301,51 @@ const Login = ({ onLogin }: LoginProps) => {
             </Button>
           </form>
           
+          {isLogin && !isForgotPassword && (
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-200" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-gray-500">ou</span>
+              </div>
+            </div>
+          )}
+          
+          {isLogin && !isForgotPassword && (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-12 text-base font-medium rounded-xl border-gray-300"
+              disabled={loading}
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  const { error } = await supabase.auth.signInWithPassword({
+                    email: "demo@concierge.com",
+                    password: "Demo@123456"
+                  });
+                  if (error) throw error;
+                  toast({
+                    title: "Login demo realizado! ✅",
+                    description: "Bem-vindo ao modo demonstração!"
+                  });
+                  setTimeout(() => onLogin(), 500);
+                } catch (error: any) {
+                  toast({
+                    title: "Erro",
+                    description: "Usuário demo não disponível. Entre em contato com o suporte.",
+                    variant: "destructive"
+                  });
+                } finally {
+                  setLoading(false);
+                }
+              }}
+            >
+              Entrar como Demo
+            </Button>
+          )}
+          
           <div className="mt-6 space-y-4">
             {isLogin && !isForgotPassword && (
               <div className="text-center">
