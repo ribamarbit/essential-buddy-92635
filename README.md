@@ -1,73 +1,139 @@
-# Welcome to your Lovable project
+# Concierge de Compras - Aplicativo de Lista de Compras Inteligente
 
-## Project info
+## Sobre o Projeto
 
-**URL**: https://lovable.dev/projects/c5693b3c-8e25-494e-8a8f-67e1d45d9d5f
+O **Concierge de Compras** é um aplicativo web de gerenciamento de compras inteligente que ajuda os usuários a:
+- Cadastrar e acompanhar itens essenciais do dia a dia
+- Gerenciar listas de compras de forma eficiente
+- Escanear notas fiscais para importar produtos automaticamente
+- Receber alertas quando itens estão acabando
 
-## How can I edit this code?
+## Informações do Projeto
 
-There are several ways of editing your application.
+**URL do Projeto**: https://lovable.dev/projects/c5693b3c-8e25-494e-8a8f-67e1d45d9d5f
 
-**Use Lovable**
+## Como editar este código?
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/c5693b3c-8e25-494e-8a8f-67e1d45d9d5f) and start prompting.
+Existem várias formas de editar sua aplicação:
 
-Changes made via Lovable will be committed automatically to this repo.
+### Usando o Lovable
 
-**Use your preferred IDE**
+Simplesmente acesse o [Projeto Lovable](https://lovable.dev/projects/c5693b3c-8e25-494e-8a8f-67e1d45d9d5f) e comece a usar os prompts.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+As alterações feitas via Lovable serão commitadas automaticamente neste repositório.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Usando sua IDE preferida
 
-Follow these steps:
+Se você deseja trabalhar localmente usando sua própria IDE, pode clonar este repositório e fazer push das alterações. As alterações enviadas também serão refletidas no Lovable.
+
+O único requisito é ter Node.js e npm instalados - [instalar com nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+
+Siga estes passos:
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Passo 1: Clone o repositório usando a URL Git do projeto.
+git clone <SUA_URL_GIT>
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Passo 2: Navegue até o diretório do projeto.
+cd <NOME_DO_SEU_PROJETO>
 
-# Step 3: Install the necessary dependencies.
+# Passo 3: Instale as dependências necessárias.
 npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Passo 4: Inicie o servidor de desenvolvimento com recarregamento automático e preview instantâneo.
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Editar arquivo diretamente no GitHub
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- Navegue até o(s) arquivo(s) desejado(s).
+- Clique no botão "Edit" (ícone de lápis) no canto superior direito da visualização do arquivo.
+- Faça suas alterações e commit as mudanças.
 
-**Use GitHub Codespaces**
+### Usar GitHub Codespaces
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- Navegue até a página principal do seu repositório.
+- Clique no botão "Code" (botão verde) próximo ao canto superior direito.
+- Selecione a aba "Codespaces".
+- Clique em "New codespace" para iniciar um novo ambiente Codespace.
+- Edite os arquivos diretamente no Codespace e faça commit e push das suas alterações quando terminar.
 
-## What technologies are used for this project?
+## Quais tecnologias são usadas neste projeto?
 
-This project is built with:
+Este projeto é construído com:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- **Vite** - Ferramenta de build rápida para desenvolvimento web moderno
+- **TypeScript** - JavaScript tipado para maior segurança e produtividade
+- **React** - Biblioteca para construção de interfaces de usuário
+- **shadcn-ui** - Componentes de UI reutilizáveis e acessíveis
+- **Tailwind CSS** - Framework CSS utilitário para estilização rápida
+- **Supabase** - Backend como serviço para autenticação e banco de dados
 
-## How can I deploy this project?
+## Estrutura do Projeto
 
-Simply open [Lovable](https://lovable.dev/projects/c5693b3c-8e25-494e-8a8f-67e1d45d9d5f) and click on Share -> Publish.
+```
+src/
+├── components/          # Componentes reutilizáveis da aplicação
+│   ├── ui/             # Componentes de UI do shadcn
+│   ├── header.tsx      # Cabeçalho da aplicação
+│   ├── shopping-list.tsx   # Lista de compras
+│   ├── item-card.tsx   # Card de item essencial
+│   └── ...
+├── pages/              # Páginas da aplicação
+│   ├── Dashboard.tsx   # Página principal com itens essenciais
+│   ├── Login.tsx       # Página de autenticação
+│   ├── AddItems.tsx    # Cadastro de itens essenciais
+│   └── ...
+├── hooks/              # Hooks customizados
+├── utils/              # Funções utilitárias
+└── integrations/       # Integrações (Supabase)
+```
 
-## Can I connect a custom domain to my Lovable project?
+## Funcionalidades Principais
 
-Yes, you can!
+### 1. Dashboard
+- Visualização de itens essenciais com contagem regressiva de dias
+- Estatísticas de consumo
+- Alertas de itens acabando
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### 2. Cadastrar Itens
+- Adicionar itens essenciais predefinidos
+- Criar itens personalizados
+- Scanner de notas fiscais
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+### 3. Catálogo de Produtos
+- Gerenciar produtos disponíveis
+- Adicionar produtos à lista de compras
+
+### 4. Lista de Compras
+- Visualizar itens a comprar
+- Compartilhar lista
+- Finalizar compras
+
+### 5. Acessibilidade
+- Leitor de tela
+- Alto contraste
+- Ajuste de fonte
+- Redução de animações
+
+## Como implantar este projeto?
+
+Simplesmente abra o [Lovable](https://lovable.dev/projects/c5693b3c-8e25-494e-8a8f-67e1d45d9d5f) e clique em Compartilhar -> Publicar.
+
+## Posso conectar um domínio personalizado ao meu projeto Lovable?
+
+Sim, você pode!
+
+Para conectar um domínio, navegue até Projeto > Configurações > Domínios e clique em Conectar Domínio.
+
+Leia mais aqui: [Configurando um domínio personalizado](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+## Credenciais de Demo
+
+Para testar a aplicação, use:
+- **Email**: demo@concierge.com
+- **Senha**: Demo@123456
+
+## Licença
+
+Este projeto foi criado usando a plataforma Lovable.
