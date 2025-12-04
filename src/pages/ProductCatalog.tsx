@@ -1,4 +1,31 @@
+/**
+ * =============================================================================
+ * PRODUCTCATALOG.TSX - Catálogo de Produtos
+ * =============================================================================
+ * 
+ * Esta página gerencia o catálogo de produtos do usuário.
+ * Diferente de "AddItems" (que vai pro Dashboard), produtos aqui vão para
+ * a Lista de Compras quando o usuário clica em "Adicionar à Lista".
+ * 
+ * Funcionalidades:
+ * - Visualizar produtos cadastrados
+ * - Adicionar novos produtos manualmente
+ * - Editar produtos existentes
+ * - Remover produtos
+ * - Adicionar produtos à Lista de Compras
+ * - Estatísticas (total de produtos, quantidade, valor)
+ * 
+ * Fluxo de dados:
+ * Produtos → localStorage (catalogProducts) → Lista de Compras (shoppingList)
+ * 
+ * =============================================================================
+ */
+
+// Importações do React
 import { useState, useEffect } from "react";
+import { useRef } from "react";
+
+// Componentes de UI
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,26 +33,41 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
-import { useRef } from "react";
-import { Plus, Scan, Trash2, Edit3, Camera, Upload } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
+// Hooks
+import { useToast } from "@/hooks/use-toast";
+
+// Ícones
+import { Plus, Scan, Trash2, Edit3, Camera, Upload } from "lucide-react";
+
+/**
+ * Interface que define a estrutura de um produto
+ */
 interface Product {
-  id: string;
-  name: string;
-  category: string;
-  price: number;
-  quantity: number;
-  unit: string;
-  icon?: string;
+  id: string;           // Identificador único
+  name: string;         // Nome do produto
+  category: string;     // Categoria (Grãos, Laticínios, etc.)
+  price: number;        // Preço unitário
+  quantity: number;     // Quantidade
+  unit: string;         // Unidade de medida (un, kg, L, etc.)
+  icon?: string;        // Emoji representativo (opcional)
 }
 
+/**
+ * Componente principal do Catálogo de Produtos
+ */
 const ProductCatalog = () => {
+  // Hook para notificações toast
   const { toast } = useToast();
+  
+  // Estado da lista de produtos
   const [products, setProducts] = useState<Product[]>([]);
 
-  // Carrega produtos do localStorage
+  /**
+   * Carrega produtos do localStorage na inicialização
+   * Se não houver produtos salvos, cria dados padrão de exemplo
+   */
   useEffect(() => {
     const storedProducts = localStorage.getItem('catalogProducts');
     if (storedProducts) {
@@ -35,7 +77,7 @@ const ProductCatalog = () => {
         console.error('Erro ao carregar produtos:', error);
       }
     } else {
-      // Dados padrão
+      // Produtos padrão para demonstração
       const defaultProducts = [
         { id: "1", name: "Arroz", category: "Grãos", price: 4.50, quantity: 5, unit: "kg", icon: "🍚" },
         { id: "2", name: "Feijão", category: "Grãos", price: 6.20, quantity: 2, unit: "kg", icon: "🫘" },
@@ -46,21 +88,30 @@ const ProductCatalog = () => {
     }
   }, []);
   
+  // Estado do formulário de novo produto
   const [newProduct, setNewProduct] = useState({
     name: "", category: "", price: "", quantity: "", unit: "un", icon: ""
   });
   
+  // Estado para edição de produto
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
+  // Estado do scanner (funcionalidade futura)
   const [scanText, setScanText] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Listas de categorias e unidades disponíveis
   const categories = ["Grãos", "Laticínios", "Carnes", "Verduras", "Frutas", "Limpeza", "Higiene", "Bebidas", "Outros"];
   const units = ["un", "kg", "g", "L", "ml", "pacote", "caixa"];
 
+  /**
+   * Adiciona um novo produto ao catálogo
+   * Valida campos obrigatórios antes de salvar
+   */
   const handleAddProduct = () => {
+    // Validação de campos obrigatórios
     if (!newProduct.name || !newProduct.price || !newProduct.quantity) {
       toast({
         title: "Campos obrigatórios",
@@ -69,6 +120,7 @@ const ProductCatalog = () => {
       return;
     }
 
+    // Cria o objeto do produto
     const product: Product = {
       id: Date.now().toString(),
       name: newProduct.name,
@@ -79,9 +131,12 @@ const ProductCatalog = () => {
       icon: newProduct.icon || "📦"
     };
 
+    // Atualiza estado e localStorage
     const updatedProducts = [...products, product];
     setProducts(updatedProducts);
     localStorage.setItem('catalogProducts', JSON.stringify(updatedProducts));
+    
+    // Limpa o formulário
     setNewProduct({ name: "", category: "", price: "", quantity: "", unit: "un", icon: "" });
     
     toast({
@@ -90,6 +145,11 @@ const ProductCatalog = () => {
     });
   };
 
+  /**
+   * Remove um produto do catálogo
+   * 
+   * @param id - ID do produto a ser removido
+   */
   const handleRemoveProduct = (id: string) => {
     const product = products.find(p => p.id === id);
     const updatedProducts = products.filter(p => p.id !== id);
@@ -102,20 +162,30 @@ const ProductCatalog = () => {
     });
   };
 
+  /**
+   * Abre o modal de edição com os dados do produto
+   * 
+   * @param product - Produto a ser editado
+   */
   const handleEditProduct = (product: Product) => {
     setEditingProduct(product);
     setIsEditDialogOpen(true);
   };
 
+  /**
+   * Salva as alterações do produto editado
+   */
   const handleSaveEditedProduct = () => {
     if (!editingProduct) return;
     
+    // Atualiza o produto na lista
     const updatedProducts = products.map(p => 
       p.id === editingProduct.id ? editingProduct : p
     );
     setProducts(updatedProducts);
     localStorage.setItem('catalogProducts', JSON.stringify(updatedProducts));
     
+    // Fecha o modal
     setIsEditDialogOpen(false);
     setEditingProduct(null);
     
@@ -125,7 +195,14 @@ const ProductCatalog = () => {
     });
   };
 
+  /**
+   * Adiciona um produto à Lista de Compras
+   * Verifica se já existe na lista antes de adicionar
+   * 
+   * @param product - Produto a ser adicionado
+   */
   const handleAddToShoppingList = (product: Product) => {
+    // Cria item para a lista de compras
     const shoppingItem = {
       id: Date.now().toString(),
       name: product.name,
@@ -134,10 +211,11 @@ const ProductCatalog = () => {
       estimatedPrice: product.price
     };
 
+    // Carrega lista existente
     const existingList = localStorage.getItem('shoppingList');
     const currentList = existingList ? JSON.parse(existingList) : [];
     
-    // Verifica se já existe
+    // Verifica se já existe na lista
     if (currentList.some((item: any) => item.name === product.name)) {
       toast({
         title: "Item já na lista",
@@ -146,6 +224,7 @@ const ProductCatalog = () => {
       return;
     }
 
+    // Adiciona à lista e salva
     const updatedList = [...currentList, shoppingItem];
     localStorage.setItem('shoppingList', JSON.stringify(updatedList));
     
@@ -155,6 +234,10 @@ const ProductCatalog = () => {
     });
   };
 
+  /**
+   * Processa texto para extrair produtos (scanner)
+   * Simula processamento OCR/NLP para notas fiscais
+   */
   const handleScanProcess = () => {
     if (!scanText.trim()) {
       toast({
@@ -166,13 +249,14 @@ const ProductCatalog = () => {
 
     setIsProcessing(true);
     
-    // Simulação de processamento de OCR/NLP
+    // Simula tempo de processamento
     setTimeout(() => {
       const lines = scanText.split('\n').filter(line => line.trim());
       const extractedProducts: Product[] = [];
       
+      // Tenta extrair produtos de cada linha usando regex
       lines.forEach(line => {
-        // Regex simples para extrair produto, quantidade e preço
+        // Regex para formato: "Nome Quantidade Unidade Preço"
         const match = line.match(/(.+?)\s+(\d+(?:\.\d+)?)\s*(\w+)?\s+R?\$?\s*(\d+[.,]\d{2})/i);
         if (match) {
           const [, name, qty, unit, price] = match;
@@ -189,6 +273,7 @@ const ProductCatalog = () => {
       });
 
       if (extractedProducts.length > 0) {
+        // Adiciona produtos extraídos
         setProducts(prev => [...prev, ...extractedProducts]);
         setScanText("");
         toast({
@@ -206,24 +291,33 @@ const ProductCatalog = () => {
     }, 2000);
   };
 
+  /**
+   * Placeholder para funcionalidade de câmera
+   * A ser implementada com integração de OCR
+   */
   const handleCameraCapture = () => {
-    // Simula funcionalidade de câmera
     toast({
       title: "Câmera em desenvolvimento",
       description: "Esta funcionalidade será implementada em breve para capturar imagens de notas fiscais."
     });
   };
 
+  /**
+   * Abre seletor de arquivos para upload
+   */
   const handleFileUpload = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
   };
 
+  /**
+   * Processa arquivo selecionado
+   * Placeholder para processamento de imagem
+   */
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Simula processamento de arquivo
       toast({
         title: "Upload em desenvolvimento",
         description: `Arquivo ${file.name} será processado quando a funcionalidade estiver completa.`
@@ -231,12 +325,18 @@ const ProductCatalog = () => {
     }
   };
 
+  // Calcula valor total do catálogo
   const totalValue = products.reduce((sum, product) => sum + (product.price * product.quantity), 0);
 
+  // ==========================================================================
+  // RENDERIZAÇÃO DO COMPONENTE
+  // ==========================================================================
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8 space-y-8">
-        {/* Header */}
+        {/* ================================================================
+            CABEÇALHO DA PÁGINA
+            ================================================================ */}
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-foreground">
             Catálogo de Produtos
@@ -246,8 +346,11 @@ const ProductCatalog = () => {
           </p>
         </div>
 
-        {/* Stats */}
+        {/* ================================================================
+            CARDS DE ESTATÍSTICAS
+            ================================================================ */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Total de produtos */}
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center space-x-2">
@@ -260,6 +363,7 @@ const ProductCatalog = () => {
             </CardContent>
           </Card>
           
+          {/* Quantidade total */}
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center space-x-2">
@@ -272,6 +376,7 @@ const ProductCatalog = () => {
             </CardContent>
           </Card>
           
+          {/* Valor total */}
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center space-x-2">
@@ -285,13 +390,19 @@ const ProductCatalog = () => {
           </Card>
         </div>
 
+        {/* ================================================================
+            ABAS: CATÁLOGO E ADICIONAR
+            ================================================================ */}
         <Tabs defaultValue="catalog" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="catalog">Catálogo</TabsTrigger>
             <TabsTrigger value="add">Adicionar</TabsTrigger>
           </TabsList>
           
-          {/* Catalog Tab */}
+          {/* ==============================================================
+              ABA: CATÁLOGO
+              Lista de produtos cadastrados
+              ============================================================== */}
           <TabsContent value="catalog" className="space-y-4">
             <Card>
               <CardHeader>
@@ -301,18 +412,21 @@ const ProductCatalog = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                {/* Estado vazio */}
                 {products.length === 0 ? (
                   <div className="text-center py-8">
                     <div className="text-4xl mb-4">📦</div>
                     <p className="text-muted-foreground">Nenhum produto cadastrado ainda</p>
                   </div>
                 ) : (
+                  /* Lista de produtos */
                   <div className="grid gap-4">
                     {products.map((product) => (
                       <div
                         key={product.id}
                         className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                       >
+                        {/* Informações do produto */}
                         <div className="flex items-center space-x-4">
                           <div className="text-2xl">{product.icon}</div>
                           <div>
@@ -327,7 +441,9 @@ const ProductCatalog = () => {
                           </div>
                         </div>
                         
+                        {/* Botões de ação */}
                         <div className="flex items-center space-x-2">
+                          {/* Botão: Adicionar à Lista de Compras */}
                           <Button 
                             variant="default" 
                             size="sm"
@@ -337,6 +453,7 @@ const ProductCatalog = () => {
                             Adicionar à Lista
                           </Button>
                           
+                          {/* Modal de edição */}
                           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                             <DialogTrigger asChild>
                               <Button 
@@ -354,6 +471,7 @@ const ProductCatalog = () => {
                                   Atualize as informações do produto.
                                 </DialogDescription>
                               </DialogHeader>
+                              {/* Formulário de edição */}
                               {editingProduct && (
                                 <div className="grid gap-4">
                                   <div className="grid grid-cols-2 gap-4">
@@ -446,6 +564,7 @@ const ProductCatalog = () => {
                             </DialogContent>
                           </Dialog>
                           
+                          {/* Botão: Remover produto */}
                           <Button 
                             variant="ghost" 
                             size="sm"
@@ -462,7 +581,10 @@ const ProductCatalog = () => {
             </Card>
           </TabsContent>
           
-          {/* Add Tab */}
+          {/* ==============================================================
+              ABA: ADICIONAR
+              Formulário para novo produto
+              ============================================================== */}
           <TabsContent value="add" className="space-y-4">
             <Card>
               <CardHeader>
@@ -473,6 +595,7 @@ const ProductCatalog = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Campo: Nome do produto */}
                   <div className="space-y-2">
                     <Label htmlFor="name">Nome do Produto</Label>
                     <Input
@@ -483,6 +606,7 @@ const ProductCatalog = () => {
                     />
                   </div>
                   
+                  {/* Campo: Categoria */}
                   <div className="space-y-2">
                     <Label htmlFor="category">Categoria</Label>
                     <select
@@ -498,6 +622,7 @@ const ProductCatalog = () => {
                     </select>
                   </div>
                   
+                  {/* Campo: Preço */}
                   <div className="space-y-2">
                     <Label htmlFor="price">Preço (R$)</Label>
                     <Input
@@ -510,6 +635,7 @@ const ProductCatalog = () => {
                     />
                   </div>
                   
+                  {/* Campo: Quantidade e Unidade */}
                   <div className="space-y-2">
                     <Label htmlFor="quantity">Quantidade</Label>
                     <div className="flex space-x-2">
@@ -533,6 +659,7 @@ const ProductCatalog = () => {
                     </div>
                   </div>
                   
+                  {/* Campo: Emoji (opcional) */}
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="icon">Emoji (opcional)</Label>
                     <Input
@@ -544,6 +671,7 @@ const ProductCatalog = () => {
                   </div>
                 </div>
                 
+                {/* Botão de adicionar */}
                 <Button onClick={handleAddProduct} className="w-full">
                   <Plus className="w-4 h-4 mr-2" />
                   Adicionar Produto
