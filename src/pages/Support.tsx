@@ -1,24 +1,60 @@
+/**
+ * =============================================================================
+ * SUPPORT.TSX - Central de Suporte
+ * =============================================================================
+ * 
+ * Esta página fornece informações de contato e um formulário para
+ * que o usuário entre em contato com o suporte.
+ * 
+ * Funcionalidades:
+ * - Cards de canais de contato (email, telefone, chat)
+ * - Formulário de contato com validação
+ * - Seção de Perguntas Frequentes (FAQ)
+ * 
+ * =============================================================================
+ */
+
+// Importações do React
 import { useState } from "react";
+
+// Componentes de UI
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
+// Hooks
 import { useToast } from "@/hooks/use-toast";
+
+// Ícones
 import { Mail, MessageSquare, Phone, Send } from "lucide-react";
 
+/**
+ * Componente principal da Central de Suporte
+ */
 const Support = () => {
+  // Hook para notificações toast
   const { toast } = useToast();
+  
+  // Estado do formulário de contato
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    subject: "",
-    message: ""
+    name: "",      // Nome do usuário
+    email: "",     // Email para contato
+    subject: "",   // Assunto da mensagem
+    message: ""    // Conteúdo da mensagem
   });
 
+  /**
+   * Processa o envio do formulário de contato
+   * Valida campos obrigatórios e simula envio
+   * 
+   * @param e - Evento de submit do formulário
+   */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validação de campos obrigatórios
     if (!formData.name || !formData.email || !formData.subject || !formData.message) {
       toast({
         title: "Erro",
@@ -28,12 +64,13 @@ const Support = () => {
       return;
     }
 
+    // Simula envio (em produção, enviaria para um backend)
     toast({
       title: "Mensagem enviada! ✅",
       description: "Entraremos em contato em breve."
     });
 
-    // Reset form
+    // Limpa o formulário
     setFormData({
       name: "",
       email: "",
@@ -42,9 +79,15 @@ const Support = () => {
     });
   };
 
+  // ==========================================================================
+  // RENDERIZAÇÃO DO COMPONENTE
+  // ==========================================================================
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
+        {/* ================================================================
+            CABEÇALHO DA PÁGINA
+            ================================================================ */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Central de Suporte</h1>
           <p className="text-muted-foreground">
@@ -52,7 +95,12 @@ const Support = () => {
           </p>
         </div>
 
+        {/* ================================================================
+            CARDS DE CANAIS DE CONTATO
+            Exibe email, telefone e horário de chat
+            ================================================================ */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">
+          {/* Card: Email */}
           <Card>
             <CardHeader>
               <Mail className="w-8 h-8 text-primary mb-2" />
@@ -63,6 +111,7 @@ const Support = () => {
             </CardContent>
           </Card>
 
+          {/* Card: Telefone */}
           <Card>
             <CardHeader>
               <Phone className="w-8 h-8 text-primary mb-2" />
@@ -73,6 +122,7 @@ const Support = () => {
             </CardContent>
           </Card>
 
+          {/* Card: Chat */}
           <Card>
             <CardHeader>
               <MessageSquare className="w-8 h-8 text-primary mb-2" />
@@ -84,6 +134,10 @@ const Support = () => {
           </Card>
         </div>
 
+        {/* ================================================================
+            FORMULÁRIO DE CONTATO
+            Permite enviar mensagem para o suporte
+            ================================================================ */}
         <Card>
           <CardHeader>
             <CardTitle>Envie sua mensagem</CardTitle>
@@ -93,7 +147,9 @@ const Support = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Campos: Nome e Email (lado a lado em desktop) */}
               <div className="grid md:grid-cols-2 gap-4">
+                {/* Campo: Nome completo */}
                 <div className="space-y-2">
                   <Label htmlFor="name">Nome completo</Label>
                   <Input
@@ -104,6 +160,7 @@ const Support = () => {
                   />
                 </div>
                 
+                {/* Campo: Email */}
                 <div className="space-y-2">
                   <Label htmlFor="email">E-mail</Label>
                   <Input
@@ -116,6 +173,7 @@ const Support = () => {
                 </div>
               </div>
 
+              {/* Campo: Assunto */}
               <div className="space-y-2">
                 <Label htmlFor="subject">Assunto</Label>
                 <Input
@@ -126,6 +184,7 @@ const Support = () => {
                 />
               </div>
 
+              {/* Campo: Mensagem */}
               <div className="space-y-2">
                 <Label htmlFor="message">Mensagem</Label>
                 <Textarea
@@ -137,6 +196,7 @@ const Support = () => {
                 />
               </div>
 
+              {/* Botão de envio */}
               <Button type="submit" className="w-full bg-gradient-primary">
                 <Send className="w-4 h-4 mr-2" />
                 Enviar mensagem
@@ -145,19 +205,28 @@ const Support = () => {
           </CardContent>
         </Card>
 
+        {/* ================================================================
+            SEÇÃO DE PERGUNTAS FREQUENTES (FAQ)
+            Respostas para dúvidas comuns
+            ================================================================ */}
         <Card className="mt-6 bg-muted/50">
           <CardHeader>
             <CardTitle className="text-lg">Perguntas Frequentes</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
+            {/* FAQ: Como adicionar produtos */}
             <div>
               <h4 className="font-semibold text-sm mb-1">Como faço para adicionar produtos?</h4>
               <p className="text-sm text-muted-foreground">Acesse a aba "Adicionar Itens" no menu principal e preencha as informações do produto.</p>
             </div>
+            
+            {/* FAQ: Compartilhar lista */}
             <div>
               <h4 className="font-semibold text-sm mb-1">Posso compartilhar minha lista de compras?</h4>
               <p className="text-sm text-muted-foreground">Sim! Na página de Lista de Compras, clique no botão de compartilhar.</p>
             </div>
+            
+            {/* FAQ: Acessibilidade */}
             <div>
               <h4 className="font-semibold text-sm mb-1">Como ativo a acessibilidade?</h4>
               <p className="text-sm text-muted-foreground">Clique no botão flutuante de acessibilidade no canto inferior direito da tela.</p>

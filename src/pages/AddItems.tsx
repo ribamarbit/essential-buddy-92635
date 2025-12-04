@@ -1,13 +1,47 @@
+/**
+ * =============================================================================
+ * ADDITEMS.TSX - Página de Cadastro de Itens Essenciais
+ * =============================================================================
+ * 
+ * Esta página permite ao usuário cadastrar itens que ele consome regularmente.
+ * Os itens cadastrados aqui aparecem no Dashboard como "Itens Essenciais".
+ * 
+ * Funcionalidades:
+ * - Seleção rápida de itens predefinidos (café, leite, arroz, etc.)
+ * - Cadastro de itens personalizados
+ * - Scanner de texto para extrair itens de notas fiscais
+ * - Upload de imagens e captura via câmera
+ * 
+ * Fluxo de dados:
+ * Items adicionados aqui → Salvos no localStorage → Aparecem no Dashboard
+ * 
+ * =============================================================================
+ */
+
+// Importações do React
 import { useState, useRef } from "react";
+
+// Componentes de UI
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+
+// Hooks
 import { useToast } from "@/hooks/use-toast";
+
+// Ícones
 import { Camera, Upload, Scan } from "lucide-react";
 
+/**
+ * Lista de itens predefinidos para seleção rápida
+ * Cada item contém:
+ * - name: Nome do produto
+ * - icon: Emoji representativo
+ * - defaultDays: Duração média em dias
+ */
 const predefinedItems = [
   { name: "Café", icon: "☕", defaultDays: 15 },
   { name: "Leite", icon: "🥛", defaultDays: 7 },
@@ -23,15 +57,36 @@ const predefinedItems = [
   { name: "Frango", icon: "🐔", defaultDays: 5 },
 ];
 
+/**
+ * Componente principal da página de cadastro de itens
+ */
 const AddItems = () => {
+  // Hook para exibir notificações toast
   const { toast } = useToast();
+  
+  // Estado para item personalizado sendo criado
   const [customItem, setCustomItem] = useState({ name: "", icon: "", days: "" });
+  
+  // Lista de itens selecionados para salvar
   const [selectedItems, setSelectedItems] = useState<typeof predefinedItems>([]);
+  
+  // Estado de processamento do scanner
   const [isScanning, setIsScanning] = useState(false);
+  
+  // Texto inserido para processamento no scanner
   const [scanText, setScanText] = useState("");
+  
+  // Referência para o input de arquivo (câmera/upload)
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  /**
+   * Adiciona um item predefinido à lista de selecionados
+   * Verifica se o item já está na lista antes de adicionar
+   * 
+   * @param item - Item predefinido a ser adicionado
+   */
   const handleQuickAdd = (item: typeof predefinedItems[0]) => {
+    // Verifica se já foi selecionado
     if (selectedItems.some(i => i.name === item.name)) {
       toast({
         title: "Item já selecionado",
@@ -40,6 +95,7 @@ const AddItems = () => {
       return;
     }
     
+    // Adiciona à lista de selecionados
     setSelectedItems(prev => [...prev, item]);
     toast({
       title: "Item adicionado! ✅",
@@ -47,7 +103,12 @@ const AddItems = () => {
     });
   };
 
+  /**
+   * Adiciona um item personalizado à lista de selecionados
+   * Valida se nome e dias foram preenchidos
+   */
   const handleCustomAdd = () => {
+    // Validação de campos obrigatórios
     if (!customItem.name || !customItem.days) {
       toast({
         title: "Preencha os campos",
@@ -56,12 +117,14 @@ const AddItems = () => {
       return;
     }
 
+    // Cria o objeto do novo item
     const newItem = {
       name: customItem.name,
-      icon: customItem.icon || "📦",
+      icon: customItem.icon || "📦", // Emoji padrão se não informado
       defaultDays: parseInt(customItem.days)
     };
 
+    // Adiciona e limpa o formulário
     setSelectedItems(prev => [...prev, newItem]);
     setCustomItem({ name: "", icon: "", days: "" });
     
@@ -71,6 +134,11 @@ const AddItems = () => {
     });
   };
 
+  /**
+   * Remove um item da lista de selecionados
+   * 
+   * @param itemName - Nome do item a ser removido
+   */
   const handleRemoveSelected = (itemName: string) => {
     setSelectedItems(prev => prev.filter(i => i.name !== itemName));
     toast({
@@ -79,84 +147,128 @@ const AddItems = () => {
     });
   };
 
+  /**
+   * Extrai itens de um texto (nota fiscal ou lista de compras)
+   * Usa um dicionário de palavras-chave para identificar produtos
+   * Também extrai quantidades e preços quando disponíveis
+   * 
+   * @param text - Texto a ser processado
+   * @returns Array de itens detectados
+   */
   const extractItemsFromText = (text: string) => {
+    // Separa o texto em linhas e remove vazias
     const lines = text.split('\n').filter(line => line.trim());
     const detectedItems: Array<{ name: string; icon: string; defaultDays: number; quantity?: string; price?: string }> = [];
     
-    // Palavras-chave expandidas para detectar itens comuns (incluindo abreviações)
+    /**
+     * Dicionário de palavras-chave para detectar produtos
+     * Inclui variações ortográficas e abreviações comuns
+     * Mapeia para: nome padronizado, emoji e duração em dias
+     */
     const keywords: { [key: string]: { name: string; icon: string; days: number } } = {
+      // Bebidas
       'café': { name: 'Café', icon: '☕', days: 15 },
       'cafe': { name: 'Café', icon: '☕', days: 15 },
       'leite': { name: 'Leite', icon: '🥛', days: 7 },
       'lt': { name: 'Leite', icon: '🥛', days: 7 },
+      'suco': { name: 'Suco', icon: '🧃', days: 7 },
+      
+      // Grãos e cereais
       'arroz': { name: 'Arroz', icon: '🍚', days: 30 },
       'feijão': { name: 'Feijão', icon: '🫘', days: 45 },
       'feijao': { name: 'Feijão', icon: '🫘', days: 45 },
       'feij': { name: 'Feijão', icon: '🫘', days: 45 },
-      'açúcar': { name: 'Açúcar', icon: '🍯', days: 45 },
-      'acucar': { name: 'Açúcar', icon: '🍯', days: 45 },
-      'óleo': { name: 'Óleo', icon: '🫒', days: 60 },
-      'oleo': { name: 'Óleo', icon: '🫒', days: 60 },
-      'sabão': { name: 'Sabão', icon: '🧼', days: 20 },
-      'sabao': { name: 'Sabão', icon: '🧼', days: 20 },
-      'detergente': { name: 'Detergente', icon: '🧽', days: 30 },
-      'ração': { name: 'Ração Pet', icon: '🐶', days: 25 },
-      'racao': { name: 'Ração Pet', icon: '🐶', days: 25 },
-      'pão': { name: 'Pão', icon: '🍞', days: 3 },
-      'pao': { name: 'Pão', icon: '🍞', days: 3 },
-      'ovos': { name: 'Ovos', icon: '🥚', days: 14 },
-      'ovo': { name: 'Ovos', icon: '🥚', days: 14 },
-      'frango': { name: 'Frango', icon: '🐔', days: 5 },
       'macarrão': { name: 'Macarrão', icon: '🍝', days: 60 },
       'macarrao': { name: 'Macarrão', icon: '🍝', days: 60 },
       'massa': { name: 'Macarrão', icon: '🍝', days: 60 },
-      'carne': { name: 'Carne', icon: '🥩', days: 5 },
-      'peixe': { name: 'Peixe', icon: '🐟', days: 3 },
-      'farinha': { name: 'Farinha', icon: '🌾', days: 90 },
-      'far': { name: 'Farinha', icon: '🌾', days: 90 },
+      
+      // Açúcar e temperos
+      'açúcar': { name: 'Açúcar', icon: '🍯', days: 45 },
+      'acucar': { name: 'Açúcar', icon: '🍯', days: 45 },
       'sal': { name: 'Sal', icon: '🧂', days: 180 },
+      
+      // Óleos e gorduras
+      'óleo': { name: 'Óleo', icon: '🫒', days: 60 },
+      'oleo': { name: 'Óleo', icon: '🫒', days: 60 },
       'manteiga': { name: 'Manteiga', icon: '🧈', days: 14 },
       'mant': { name: 'Manteiga', icon: '🧈', days: 14 },
+      
+      // Limpeza
+      'sabão': { name: 'Sabão', icon: '🧼', days: 20 },
+      'sabao': { name: 'Sabão', icon: '🧼', days: 20 },
+      'detergente': { name: 'Detergente', icon: '🧽', days: 30 },
+      'amaciante': { name: 'Amaciante', icon: '🧴', days: 30 },
+      'esponja': { name: 'Esponja', icon: '🧽', days: 15 },
+      
+      // Pet
+      'ração': { name: 'Ração Pet', icon: '🐶', days: 25 },
+      'racao': { name: 'Ração Pet', icon: '🐶', days: 25 },
+      
+      // Padaria
+      'pão': { name: 'Pão', icon: '🍞', days: 3 },
+      'pao': { name: 'Pão', icon: '🍞', days: 3 },
+      
+      // Proteínas
+      'ovos': { name: 'Ovos', icon: '🥚', days: 14 },
+      'ovo': { name: 'Ovos', icon: '🥚', days: 14 },
+      'frango': { name: 'Frango', icon: '🐔', days: 5 },
+      'carne': { name: 'Carne', icon: '🥩', days: 5 },
+      'peixe': { name: 'Peixe', icon: '🐟', days: 3 },
+      
+      // Farináceos
+      'farinha': { name: 'Farinha', icon: '🌾', days: 90 },
+      'far': { name: 'Farinha', icon: '🌾', days: 90 },
+      
+      // Laticínios
       'queijo': { name: 'Queijo', icon: '🧀', days: 15 },
       'iogurte': { name: 'Iogurte', icon: '🥛', days: 7 },
+      
+      // Higiene
       'sabonete': { name: 'Sabonete', icon: '🧼', days: 30 },
       'shampoo': { name: 'Shampoo', icon: '🧴', days: 45 },
       'condicionador': { name: 'Condicionador', icon: '🧴', days: 45 },
       'pasta': { name: 'Pasta de dente', icon: '🦷', days: 30 },
       'dente': { name: 'Pasta de dente', icon: '🦷', days: 30 },
+      'desodorante': { name: 'Desodorante', icon: '🧴', days: 30 },
+      'desod': { name: 'Desodorante', icon: '🧴', days: 30 },
+      
+      // Frutas e verduras
       'cenoura': { name: 'Cenoura', icon: '🥕', days: 7 },
       'tomate': { name: 'Tomate', icon: '🍅', days: 5 },
       'laranja': { name: 'Laranja', icon: '🍊', days: 7 },
       'manga': { name: 'Manga', icon: '🥭', days: 5 },
       'banana': { name: 'Banana', icon: '🍌', days: 5 },
-      'suco': { name: 'Suco', icon: '🧃', days: 7 },
+      
+      // Snacks
       'biscoito': { name: 'Biscoito', icon: '🍪', days: 30 },
       'bisc': { name: 'Biscoito', icon: '🍪', days: 30 },
-      'desodorante': { name: 'Desodorante', icon: '🧴', days: 30 },
-      'desod': { name: 'Desodorante', icon: '🧴', days: 30 },
-      'amaciante': { name: 'Amaciante', icon: '🧴', days: 30 },
-      'esponja': { name: 'Esponja', icon: '🧽', days: 15 },
+      
+      // Cereais
       'flocos': { name: 'Flocos de Milho', icon: '🌽', days: 45 },
       'flokao': { name: 'Flocos de Milho', icon: '🌽', days: 45 }
     };
 
-    // Regex para extrair quantidade, unidade e preço
+    // Expressão regular para extrair preço (ex: R$ 4,50 ou 4.50)
     const priceRegex = /r?\$?\s*(\d+[.,]\d{2})/i;
+    
+    // Expressão regular para extrair quantidade e unidade
     const quantityRegex = /(\d+[.,]?\d*)\s*(kg|g|l|ml|un|unidade|und|pc)/i;
 
+    // Processa cada linha do texto
     lines.forEach(line => {
       const lowerLine = line.toLowerCase();
       
-      // Extrair preço
+      // Extrai preço se existir
       const priceMatch = line.match(priceRegex);
       const price = priceMatch ? priceMatch[1].replace(',', '.') : undefined;
       
-      // Extrair quantidade
+      // Extrai quantidade se existir
       const quantityMatch = line.match(quantityRegex);
       const quantity = quantityMatch ? `${quantityMatch[1]} ${quantityMatch[2]}` : undefined;
       
-      // Detectar produtos por palavras-chave
+      // Busca palavras-chave do dicionário
       Object.entries(keywords).forEach(([key, item]) => {
+        // Verifica se a linha contém a palavra-chave e se não é duplicado
         if (lowerLine.includes(key) && !detectedItems.some(i => i.name === item.name)) {
           detectedItems.push({ 
             name: item.name, 
@@ -172,9 +284,13 @@ const AddItems = () => {
     return detectedItems;
   };
 
+  /**
+   * Solicita permissão e abre a câmera para capturar imagem
+   * Usa a API de MediaDevices para verificar permissões
+   */
   const handleCameraCapture = async () => {
     try {
-      // Solicita permissão para câmera
+      // Verifica permissão de câmera
       const permission = await navigator.permissions.query({ name: 'camera' as PermissionName });
       
       if (permission.state === 'denied') {
@@ -186,11 +302,11 @@ const AddItems = () => {
         return;
       }
 
-      // Testa acesso à câmera
+      // Testa se consegue acessar a câmera
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      stream.getTracks().forEach(track => track.stop()); // Para o stream após verificar permissão
+      stream.getTracks().forEach(track => track.stop()); // Para o stream após verificar
       
-      // Abre o input de arquivo com câmera
+      // Abre o seletor de arquivo com câmera
       if (fileInputRef.current) {
         fileInputRef.current.setAttribute('capture', 'environment');
         fileInputRef.current.setAttribute('accept', 'image/*');
@@ -205,6 +321,9 @@ const AddItems = () => {
     }
   };
 
+  /**
+   * Abre a galeria para selecionar uma imagem
+   */
   const handleGalleryUpload = () => {
     if (fileInputRef.current) {
       fileInputRef.current.removeAttribute('capture');
@@ -213,6 +332,12 @@ const AddItems = () => {
     }
   };
 
+  /**
+   * Processa uma imagem enviada (câmera ou galeria)
+   * Simula OCR para extrair texto da imagem
+   * 
+   * @param event - Evento de mudança do input de arquivo
+   */
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -220,13 +345,13 @@ const AddItems = () => {
     setIsScanning(true);
     
     try {
-      // Simular processamento de imagem (OCR)
+      // Simula tempo de processamento OCR
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Simulação de OCR - em produção, isso usaria um serviço de OCR real
+      // Simula resultado de OCR com dados de exemplo
       const reader = new FileReader();
       reader.onload = (e) => {
-        // Simular extração de texto de nota fiscal
+        // Texto simulado de nota fiscal para demonstração
         const mockText = `
           CARNE NA ROLA kg 1.866 kg X 17.99 33.44
           FEIJ D T2 IDEAL 1kg 1 un X 6.60 6.60
@@ -242,13 +367,16 @@ const AddItems = () => {
           SUCO D VAL 1.5L UVA 1 un X 8.99 8.99
         `;
         
+        // Extrai itens do texto simulado
         const detectedItems = extractItemsFromText(mockText);
         
         if (detectedItems.length > 0) {
+          // Filtra itens que já estão selecionados
           const newItems = detectedItems.filter(
             item => !selectedItems.some(selected => selected.name === item.name)
           );
           
+          // Adiciona novos itens à lista
           setSelectedItems(prev => [...prev, ...newItems.map(item => ({
             name: item.name,
             icon: item.icon,
@@ -268,6 +396,7 @@ const AddItems = () => {
         }
         
         setIsScanning(false);
+        // Limpa o input para permitir selecionar o mesmo arquivo novamente
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
@@ -287,6 +416,10 @@ const AddItems = () => {
     }
   };
 
+  /**
+   * Processa texto colado manualmente
+   * Extrai itens usando o dicionário de palavras-chave
+   */
   const handleTextProcess = () => {
     if (!scanText.trim()) {
       toast({
@@ -297,13 +430,16 @@ const AddItems = () => {
       return;
     }
 
+    // Extrai itens do texto
     const detectedItems = extractItemsFromText(scanText);
     
     if (detectedItems.length > 0) {
+      // Filtra duplicados
       const newItems = detectedItems.filter(
         item => !selectedItems.some(selected => selected.name === item.name)
       );
       
+      // Adiciona à lista e limpa o campo
       setSelectedItems(prev => [...prev, ...newItems]);
       setScanText("");
       
@@ -320,6 +456,10 @@ const AddItems = () => {
     }
   };
 
+  /**
+   * Salva os itens selecionados no localStorage
+   * Os itens salvos aparecem no Dashboard como "Itens Essenciais"
+   */
   const handleSaveItems = () => {
     if (selectedItems.length === 0) {
       toast({
@@ -329,20 +469,21 @@ const AddItems = () => {
       return;
     }
 
-    // Salvar no Dashboard como itens essenciais
+    // Carrega itens existentes do localStorage
     const existingData = localStorage.getItem('dashboardEssentials');
     const currentItems = existingData ? JSON.parse(existingData) : [];
     
+    // Cria objetos de itens com metadados
     const newItems = selectedItems.map(item => ({
       id: Date.now().toString() + Math.random(),
       name: item.name,
       icon: item.icon,
-      startDate: Date.now(),
+      startDate: Date.now(), // Data de início para cálculo de consumo
       totalDays: item.defaultDays,
-      estimatedPrice: 5.0
+      estimatedPrice: 5.0 // Preço padrão
     }));
     
-    // Evita duplicados
+    // Evita duplicatas verificando por nome
     const uniqueItems = [...currentItems];
     newItems.forEach(newItem => {
       if (!uniqueItems.some(existing => existing.name === newItem.name)) {
@@ -350,6 +491,7 @@ const AddItems = () => {
       }
     });
     
+    // Salva no localStorage
     localStorage.setItem('dashboardEssentials', JSON.stringify(uniqueItems));
     
     toast({
@@ -357,13 +499,19 @@ const AddItems = () => {
       description: `${selectedItems.length} ${selectedItems.length === 1 ? 'item foi adicionado' : 'itens foram adicionados'} aos itens essenciais.`
     });
     
+    // Limpa a seleção
     setSelectedItems([]);
   };
 
+  // ==========================================================================
+  // RENDERIZAÇÃO DO COMPONENTE
+  // ==========================================================================
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8 space-y-8">
-        {/* Header */}
+        {/* ================================================================
+            CABEÇALHO DA PÁGINA
+            ================================================================ */}
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-foreground">
             Cadastre seus Itens Essenciais
@@ -373,16 +521,22 @@ const AddItems = () => {
           </p>
         </div>
 
+        {/* ================================================================
+            ABAS: CATÁLOGO E SCANNER
+            ================================================================ */}
         <Tabs defaultValue="catalog" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="catalog">Catálogo</TabsTrigger>
             <TabsTrigger value="scanner">Scanner</TabsTrigger>
           </TabsList>
 
-          {/* Catálogo Tab */}
+          {/* ==============================================================
+              ABA: CATÁLOGO
+              Seleção rápida + Item personalizado
+              ============================================================== */}
           <TabsContent value="catalog" className="space-y-4">
             <div className="grid lg:grid-cols-2 gap-8">
-              {/* Quick selection */}
+              {/* Card de Seleção Rápida */}
               <Card>
                 <CardHeader>
                   <CardTitle>Seleção Rápida</CardTitle>
@@ -391,6 +545,7 @@ const AddItems = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
+                  {/* Grid de botões de itens predefinidos */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {predefinedItems.map((item) => (
                       <Button
@@ -410,7 +565,7 @@ const AddItems = () => {
                 </CardContent>
               </Card>
 
-              {/* Custom item */}
+              {/* Card de Item Personalizado */}
               <Card>
                 <CardHeader>
                   <CardTitle>Item Personalizado</CardTitle>
@@ -419,6 +574,7 @@ const AddItems = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Campo: Nome do Item */}
                   <div className="space-y-2">
                     <Label htmlFor="name">Nome do Item</Label>
                     <Input
@@ -429,6 +585,7 @@ const AddItems = () => {
                     />
                   </div>
                   
+                  {/* Campo: Emoji (opcional) */}
                   <div className="space-y-2">
                     <Label htmlFor="icon">Emoji (opcional)</Label>
                     <Input
@@ -439,6 +596,7 @@ const AddItems = () => {
                     />
                   </div>
                   
+                  {/* Campo: Duração em dias */}
                   <div className="space-y-2">
                     <Label htmlFor="days">Duração média (dias)</Label>
                     <Input
@@ -450,6 +608,7 @@ const AddItems = () => {
                     />
                   </div>
                   
+                  {/* Botão de adicionar */}
                   <Button onClick={handleCustomAdd} className="w-full">
                     Adicionar Item Personalizado
                   </Button>
@@ -459,7 +618,10 @@ const AddItems = () => {
           </TabsContent>
 
 
-          {/* Scanner Tab */}
+          {/* ==============================================================
+              ABA: SCANNER
+              Processamento de texto e imagens de notas fiscais
+              ============================================================== */}
           <TabsContent value="scanner" className="space-y-4">
             <Card>
               <CardHeader>
@@ -472,6 +634,7 @@ const AddItems = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Campo de texto para colar nota fiscal */}
                 <div className="space-y-2">
                   <Label htmlFor="scan-text">Texto da Lista/Nota Fiscal</Label>
                   <Textarea
@@ -487,6 +650,7 @@ const AddItems = () => {
                   </p>
                 </div>
 
+                {/* Botão de processar texto */}
                 <Button 
                   onClick={handleTextProcess}
                   disabled={isScanning || !scanText.trim()}
@@ -497,6 +661,7 @@ const AddItems = () => {
                   {isScanning ? 'Processando...' : 'Processar Texto'}
                 </Button>
 
+                {/* Botões de câmera e upload */}
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
@@ -519,6 +684,7 @@ const AddItems = () => {
                   </Button>
                 </div>
 
+                {/* Input oculto para arquivo (câmera/galeria) */}
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -527,6 +693,7 @@ const AddItems = () => {
                   className="hidden"
                 />
 
+                {/* Card de dicas */}
                 <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-100 dark:border-blue-900">
                   <div className="flex items-start gap-2">
                     <span className="text-lg">💡</span>
@@ -546,7 +713,10 @@ const AddItems = () => {
           </TabsContent>
         </Tabs>
 
-        {/* Selected Items Summary */}
+        {/* ================================================================
+            RESUMO DOS ITENS SELECIONADOS
+            Mostra itens selecionados com opção de remover e salvar
+            ================================================================ */}
         {selectedItems.length > 0 && (
           <Card className="border-primary/50">
             <CardHeader>
@@ -556,6 +726,7 @@ const AddItems = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Lista de chips com itens selecionados */}
               <div className="flex flex-wrap gap-2">
                 {selectedItems.map((item) => (
                   <div
@@ -565,6 +736,7 @@ const AddItems = () => {
                     <span>{item.icon}</span>
                     <span className="text-sm font-medium">{item.name}</span>
                     <span className="text-xs text-muted-foreground">({item.defaultDays}d)</span>
+                    {/* Botão de remover item */}
                     <Button
                       variant="ghost"
                       size="sm"
@@ -577,6 +749,7 @@ const AddItems = () => {
                 ))}
               </div>
               
+              {/* Botão de salvar no Dashboard */}
               <Button onClick={handleSaveItems} className="w-full" size="lg">
                 Salvar no Dashboard
               </Button>

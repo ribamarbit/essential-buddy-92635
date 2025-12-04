@@ -1,18 +1,67 @@
+/**
+ * =============================================================================
+ * USER-GUIDE.TSX - Guia do Usuário (Modal de Onboarding)
+ * =============================================================================
+ * 
+ * Este componente exibe um modal com um tour guiado pelas funcionalidades
+ * do aplicativo. É usado para onboarding de novos usuários.
+ * 
+ * Características:
+ * - Modal com navegação por passos (steps)
+ * - Barra de progresso visual
+ * - Conteúdo educativo sobre cada funcionalidade
+ * - Navegação anterior/próximo
+ * - Indicadores de passo (dots)
+ * 
+ * =============================================================================
+ */
+
+// Importa o hook useState do React para gerenciar estado local
 import { useState } from "react";
+
+// Importa componentes de UI
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, X, ShoppingCart, Plus, Scan, BarChart3, Settings } from "lucide-react";
 
+// Importa ícones do lucide-react
+import { ChevronLeft, ChevronRight, ShoppingCart, Plus, Scan, BarChart3, Settings } from "lucide-react";
+
+/**
+ * Interface que define as propriedades do componente UserGuide
+ * @property isOpen - Controla se o modal está aberto ou fechado
+ * @property onClose - Função callback executada ao fechar o modal
+ */
 interface UserGuideProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+/**
+ * Componente UserGuide
+ * 
+ * Exibe um modal de guia do usuário com múltiplos passos explicando
+ * as funcionalidades do aplicativo.
+ * 
+ * @param isOpen - Estado de visibilidade do modal
+ * @param onClose - Função para fechar o modal
+ */
 const UserGuide = ({ isOpen, onClose }: UserGuideProps) => {
+  // Estado que controla o passo atual do guia (0-indexed)
   const [currentStep, setCurrentStep] = useState(0);
 
+  /**
+   * Array de passos do guia
+   * Cada passo contém:
+   * - title: Título do passo
+   * - description: Descrição breve
+   * - icon: Ícone ilustrativo
+   * - content: Conteúdo JSX detalhado
+   */
   const steps = [
+    // =========================================================================
+    // PASSO 1: Boas-vindas
+    // =========================================================================
     {
       title: "Bem-vindo ao Concierge de Compras! 🛒",
       description: "Seu assistente pessoal para organizar compras e gerenciar produtos",
@@ -35,6 +84,9 @@ const UserGuide = ({ isOpen, onClose }: UserGuideProps) => {
         </div>
       )
     },
+    // =========================================================================
+    // PASSO 2: Dashboard
+    // =========================================================================
     {
       title: "Dashboard - Visão Geral 📊",
       description: "Acompanhe suas estatísticas e atividades recentes",
@@ -57,6 +109,9 @@ const UserGuide = ({ isOpen, onClose }: UserGuideProps) => {
         </div>
       )
     },
+    // =========================================================================
+    // PASSO 3: Cadastrar Itens
+    // =========================================================================
     {
       title: "Cadastrar Itens Essenciais 🏷️",
       description: "Adicione os produtos que você consome regularmente",
@@ -89,6 +144,9 @@ const UserGuide = ({ isOpen, onClose }: UserGuideProps) => {
         </div>
       )
     },
+    // =========================================================================
+    // PASSO 4: Catálogo de Produtos
+    // =========================================================================
     {
       title: "Catálogo de Produtos 🛒",
       description: "Gerencie produtos para adicionar à Lista de Compras",
@@ -121,6 +179,9 @@ const UserGuide = ({ isOpen, onClose }: UserGuideProps) => {
         </div>
       )
     },
+    // =========================================================================
+    // PASSO 5: Scanner Inteligente
+    // =========================================================================
     {
       title: "Scanner Inteligente 📱",
       description: "Detecta produtos, quantidades e preços de notas fiscais",
@@ -159,6 +220,9 @@ const UserGuide = ({ isOpen, onClose }: UserGuideProps) => {
         </div>
       )
     },
+    // =========================================================================
+    // PASSO 6: Acessibilidade
+    // =========================================================================
     {
       title: "Acessibilidade ♿",
       description: "Recursos para uma experiência mais inclusiva",
@@ -190,6 +254,9 @@ const UserGuide = ({ isOpen, onClose }: UserGuideProps) => {
         </div>
       )
     },
+    // =========================================================================
+    // PASSO 7: Conclusão
+    // =========================================================================
     {
       title: "Pronto para começar! 🚀",
       description: "Agora você já conhece todas as funcionalidades",
@@ -217,45 +284,58 @@ const UserGuide = ({ isOpen, onClose }: UserGuideProps) => {
     }
   ];
 
+  /**
+   * Avança para o próximo passo do guia
+   * Só avança se não estiver no último passo
+   */
   const nextStep = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     }
   };
 
+  /**
+   * Retorna para o passo anterior do guia
+   * Só retorna se não estiver no primeiro passo
+   */
   const prevStep = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
     }
   };
 
+  /**
+   * Fecha o modal e reseta o passo para o início
+   * Chamado quando o usuário fecha o guia
+   */
   const handleClose = () => {
     setCurrentStep(0);
     onClose();
   };
 
+  // ==========================================================================
+  // RENDERIZAÇÃO DO COMPONENTE
+  // ==========================================================================
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="relative">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleClose}
-            className="absolute right-0 top-0"
-          >
-            <X className="w-4 h-4" />
-          </Button>
+        {/* Cabeçalho do modal */}
+        <DialogHeader>
           <DialogTitle className="text-center">Guia do Usuário</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-6">
-          {/* Progress Bar */}
+          {/* ================================================================
+              BARRA DE PROGRESSO
+              Mostra o progresso do usuário através dos passos
+              ================================================================ */}
           <div className="space-y-2">
+            {/* Texto indicando passo atual e porcentagem */}
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>Passo {currentStep + 1} de {steps.length}</span>
               <span>{Math.round(((currentStep + 1) / steps.length) * 100)}%</span>
             </div>
+            {/* Barra visual de progresso */}
             <div className="w-full bg-muted rounded-full h-2">
               <div 
                 className="bg-gradient-primary h-2 rounded-full transition-all duration-300"
@@ -264,24 +344,34 @@ const UserGuide = ({ isOpen, onClose }: UserGuideProps) => {
             </div>
           </div>
           
-          {/* Step Content */}
+          {/* ================================================================
+              CONTEÚDO DO PASSO ATUAL
+              Card com ícone, título, descrição e conteúdo
+              ================================================================ */}
           <Card className="border-0 shadow-none">
             <CardHeader className="text-center space-y-4">
+              {/* Ícone do passo atual */}
               <div className="mx-auto w-20 h-20 bg-gradient-to-br from-muted to-muted/50 rounded-2xl flex items-center justify-center">
                 {steps[currentStep].icon}
               </div>
+              {/* Título e descrição */}
               <div>
                 <CardTitle className="text-xl">{steps[currentStep].title}</CardTitle>
                 <CardDescription className="mt-2">{steps[currentStep].description}</CardDescription>
               </div>
             </CardHeader>
+            {/* Conteúdo detalhado do passo */}
             <CardContent>
               {steps[currentStep].content}
             </CardContent>
           </Card>
           
-          {/* Navigation */}
+          {/* ================================================================
+              NAVEGAÇÃO
+              Botões de anterior/próximo e indicadores de passo
+              ================================================================ */}
           <div className="flex justify-between items-center pt-4">
+            {/* Botão Anterior - desabilitado no primeiro passo */}
             <Button
               variant="outline"
               onClick={prevStep}
@@ -292,6 +382,7 @@ const UserGuide = ({ isOpen, onClose }: UserGuideProps) => {
               Anterior
             </Button>
             
+            {/* Indicadores de passo (dots) */}
             <div className="flex gap-2">
               {steps.map((_, index) => (
                 <div
@@ -303,6 +394,7 @@ const UserGuide = ({ isOpen, onClose }: UserGuideProps) => {
               ))}
             </div>
             
+            {/* Botão Próximo ou Finalizar (no último passo) */}
             {currentStep === steps.length - 1 ? (
               <Button onClick={handleClose} className="bg-gradient-success">
                 Finalizar
