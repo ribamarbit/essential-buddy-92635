@@ -222,7 +222,7 @@ const Header = ({ notificationCount = 0, onLogout, onShowGuide }: HeaderProps) =
 
           {/* Navigation actions */}
           <div className="flex items-center gap-2">
-            {/* Mobile menu */}
+            {/* Mobile menu - Menu hambúrguer para dispositivos móveis */}
             <div className="md:hidden">
               <Sheet>
                 <SheetTrigger asChild>
@@ -236,8 +236,9 @@ const Header = ({ notificationCount = 0, onLogout, onShowGuide }: HeaderProps) =
                     <SheetDescription>Navegue pelas funcionalidades do app</SheetDescription>
                   </SheetHeader>
                   
-                  <div className="mt-6 space-y-4">
-                    <Link to="/" className="w-full">
+                  <div className="mt-6 space-y-2">
+                    {/* Links de navegação */}
+                    <Link to="/" className="w-full block">
                       <Button 
                         variant={isActive("/") ? "default" : "ghost"} 
                         className="w-full justify-start"
@@ -247,7 +248,7 @@ const Header = ({ notificationCount = 0, onLogout, onShowGuide }: HeaderProps) =
                       </Button>
                     </Link>
                     
-                    <Link to="/add-items" className="w-full">
+                    <Link to="/add-items" className="w-full block">
                       <Button 
                         variant={isActive("/add-items") ? "default" : "ghost"} 
                         className="w-full justify-start"
@@ -257,7 +258,7 @@ const Header = ({ notificationCount = 0, onLogout, onShowGuide }: HeaderProps) =
                       </Button>
                     </Link>
                     
-                    <Link to="/products" className="w-full">
+                    <Link to="/products" className="w-full block">
                       <Button 
                         variant={isActive("/products") ? "default" : "ghost"} 
                         className="w-full justify-start"
@@ -267,7 +268,7 @@ const Header = ({ notificationCount = 0, onLogout, onShowGuide }: HeaderProps) =
                       </Button>
                     </Link>
                     
-                    <Link to="/shopping-list" className="w-full">
+                    <Link to="/shopping-list" className="w-full block">
                       <Button 
                         variant={isActive("/shopping-list") ? "default" : "ghost"} 
                         className="w-full justify-start"
@@ -277,7 +278,7 @@ const Header = ({ notificationCount = 0, onLogout, onShowGuide }: HeaderProps) =
                       </Button>
                     </Link>
                     
-                    <Link to="/support" className="w-full">
+                    <Link to="/support" className="w-full block">
                       <Button 
                         variant={isActive("/support") ? "default" : "ghost"} 
                         className="w-full justify-start"
@@ -287,7 +288,7 @@ const Header = ({ notificationCount = 0, onLogout, onShowGuide }: HeaderProps) =
                       </Button>
                     </Link>
                     
-                    <Link to="/perfil" className="w-full">
+                    <Link to="/perfil" className="w-full block">
                       <Button 
                         variant={isActive("/perfil") ? "default" : "ghost"} 
                         className="w-full justify-start"
@@ -296,12 +297,73 @@ const Header = ({ notificationCount = 0, onLogout, onShowGuide }: HeaderProps) =
                         Perfil
                       </Button>
                     </Link>
+
+                    <Separator className="my-4" />
+
+                    {/* Ações rápidas no menu mobile */}
+                    <Button 
+                      variant="ghost" 
+                      className="w-full justify-start relative"
+                      onClick={() => toggleSidebar('notifications')}
+                    >
+                      <Bell className="w-4 h-4 mr-2" />
+                      Notificações
+                      {notificationCount > 0 && (
+                        <Badge className="ml-auto bg-urgent text-urgent-foreground text-xs">
+                          {notificationCount > 9 ? "9+" : notificationCount}
+                        </Badge>
+                      )}
+                    </Button>
+
+                    <Button 
+                      variant="ghost" 
+                      className="w-full justify-start"
+                      onClick={() => toggleSidebar('settings')}
+                    >
+                      <Settings className="w-4 h-4 mr-2" />
+                      Configurações
+                    </Button>
+
+                    {onShowGuide && (
+                      <Button 
+                        variant="ghost" 
+                        className="w-full justify-start"
+                        onClick={onShowGuide}
+                      >
+                        <HelpCircle className="w-4 h-4 mr-2" />
+                        Manual de Instruções
+                      </Button>
+                    )}
+
+                    <Separator className="my-4" />
+
+                    {/* Botão de logout */}
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" className="w-full justify-start text-destructive hover:text-destructive">
+                          <LogOut className="w-4 h-4 mr-2" />
+                          Sair da conta
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Sair da conta?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Você será desconectado e redirecionado para a tela de login.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleLogout}>Sair</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </SheetContent>
               </Sheet>
             </div>
 
-            {/* Dynamic Sidebar Tabs */}
+            {/* Dynamic Sidebar Tabs - Visível apenas em desktop */}
             {Object.values(sidebarTabs).map((tab) => {
               const IconComponent = tab.icon;
               return (
@@ -314,7 +376,7 @@ const Header = ({ notificationCount = 0, onLogout, onShowGuide }: HeaderProps) =
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      className="relative"
+                      className="relative hidden md:flex"
                     >
                       <IconComponent className="w-5 h-5" />
                       {tab.hasNotificationBadge && notificationCount > 0 && (

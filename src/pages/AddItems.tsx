@@ -19,7 +19,7 @@
  */
 
 // Importações do React
-import { useState, useRef } from "react";
+import { useState } from "react";
 
 // Componentes de UI
 import { Button } from "@/components/ui/button";
@@ -33,7 +33,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 
 // Ícones
-import { Camera, Upload, Scan } from "lucide-react";
+import { Scan } from "lucide-react";
 
 /**
  * Lista de itens predefinidos para seleção rápida
@@ -76,8 +76,6 @@ const AddItems = () => {
   // Texto inserido para processamento no scanner
   const [scanText, setScanText] = useState("");
   
-  // Referência para o input de arquivo (câmera/upload)
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   /**
    * Adiciona um item predefinido à lista de selecionados
@@ -285,138 +283,6 @@ const AddItems = () => {
   };
 
   /**
-   * Solicita permissão e abre a câmera para capturar imagem
-   * Usa a API de MediaDevices para verificar permissões
-   */
-  const handleCameraCapture = async () => {
-    try {
-      // Verifica permissão de câmera
-      const permission = await navigator.permissions.query({ name: 'camera' as PermissionName });
-      
-      if (permission.state === 'denied') {
-        toast({
-          title: "Permissão negada",
-          description: "Por favor, permita o acesso à câmera nas configurações do navegador.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // Testa se consegue acessar a câmera
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      stream.getTracks().forEach(track => track.stop()); // Para o stream após verificar
-      
-      // Abre o seletor de arquivo com câmera
-      if (fileInputRef.current) {
-        fileInputRef.current.setAttribute('capture', 'environment');
-        fileInputRef.current.setAttribute('accept', 'image/*');
-        fileInputRef.current.click();
-      }
-    } catch (error) {
-      toast({
-        title: "Acesso à câmera negado",
-        description: "É necessário permitir o acesso à câmera para usar esta função.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  /**
-   * Abre a galeria para selecionar uma imagem
-   */
-  const handleGalleryUpload = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.removeAttribute('capture');
-      fileInputRef.current.setAttribute('accept', 'image/*');
-      fileInputRef.current.click();
-    }
-  };
-
-  /**
-   * Processa uma imagem enviada (câmera ou galeria)
-   * Simula OCR para extrair texto da imagem
-   * 
-   * @param event - Evento de mudança do input de arquivo
-   */
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setIsScanning(true);
-    
-    try {
-      // Simula tempo de processamento OCR
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Simula resultado de OCR com dados de exemplo
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        // Texto simulado de nota fiscal para demonstração
-        const mockText = `
-          CARNE NA ROLA kg 1.866 kg X 17.99 33.44
-          FEIJ D T2 IDEAL 1kg 1 un X 6.60 6.60
-          FAR NAHO POPY 1kg AM 1 un X 6.23 6.23
-          FL HIL FLOKAO 400g 1 un X 1.39 1.39
-          LEITE PO PC 200g LBO 2 un X 6.49 12.98
-          ARROZ B LF T2 TIARAJ 3 un X 4.99 14.97
-          PAO MASSA FINH kg 0.294 kg X 22.00 6.47
-          CENOURA kg 0.620 kg X 3.99 2.47
-          LARANJA PERA kg 1.165 kg X 3.99 3.48
-          MANGA PALMER kg 1.655 kg X 7.99 11.30
-          TOMATE LONG VIDA kg 0.315 kg X 8.99 2.82
-          SUCO D VAL 1.5L UVA 1 un X 8.99 8.99
-        `;
-        
-        // Extrai itens do texto simulado
-        const detectedItems = extractItemsFromText(mockText);
-        
-        if (detectedItems.length > 0) {
-          // Filtra itens que já estão selecionados
-          const newItems = detectedItems.filter(
-            item => !selectedItems.some(selected => selected.name === item.name)
-          );
-          
-          // Adiciona novos itens à lista
-          setSelectedItems(prev => [...prev, ...newItems.map(item => ({
-            name: item.name,
-            icon: item.icon,
-            defaultDays: item.defaultDays
-          }))]);
-          
-          toast({
-            title: "✅ Itens detectados!",
-            description: `${newItems.length} ${newItems.length === 1 ? 'item foi adicionado' : 'itens foram adicionados'} da sua nota fiscal.`
-          });
-        } else {
-          toast({
-            title: "Nenhum item detectado",
-            description: "Tente uma imagem mais clara ou adicione os itens manualmente.",
-            variant: "destructive"
-          });
-        }
-        
-        setIsScanning(false);
-        // Limpa o input para permitir selecionar o mesmo arquivo novamente
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-      };
-      
-      reader.readAsDataURL(file);
-    } catch (error) {
-      toast({
-        title: "Erro ao processar imagem",
-        description: "Não foi possível ler a imagem. Tente novamente.",
-        variant: "destructive"
-      });
-      setIsScanning(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
-  };
-
-  /**
    * Processa texto colado manualmente
    * Extrai itens usando o dicionário de palavras-chave
    */
@@ -620,14 +486,14 @@ const AddItems = () => {
 
           {/* ==============================================================
               ABA: SCANNER
-              Processamento de texto e imagens de notas fiscais
+              Processamento de texto de listas de compras
               ============================================================== */}
           <TabsContent value="scanner" className="space-y-4">
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Scan className="w-5 h-5 text-primary" />
-                  <CardTitle>Scanner de Lista/Nota Fiscal</CardTitle>
+                  <CardTitle>Importar Lista de Compras</CardTitle>
                 </div>
                 <CardDescription>
                   Cole o texto da sua lista de compras ou nota fiscal para extrair produtos automaticamente
@@ -639,15 +505,18 @@ const AddItems = () => {
                   <Label htmlFor="scan-text">Texto da Lista/Nota Fiscal</Label>
                   <Textarea
                     id="scan-text"
-                    placeholder="Cole aqui o texto da sua lista de compras ou nota fiscal..."
+                    placeholder={`Cole aqui o texto da sua lista de compras ou nota fiscal...
+
+Exemplo:
+Arroz 5 kg R$ 4,50
+Leite 1L R$ 3.80
+Feijão 1 kg R$ 6,20
+Café 500g R$ 12,90`}
                     value={scanText}
                     onChange={(e) => setScanText(e.target.value)}
-                    rows={8}
-                    className="resize-none"
+                    rows={10}
+                    className="resize-none font-mono text-sm"
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Exemplo de formato: "Arroz 5 kg R$ 4,50" ou "Leite 1L R$3.80"
-                  </p>
                 </div>
 
                 {/* Botão de processar texto */}
@@ -658,52 +527,20 @@ const AddItems = () => {
                   size="lg"
                 >
                   <Scan className="w-4 h-4 mr-2" />
-                  {isScanning ? 'Processando...' : 'Processar Texto'}
+                  {isScanning ? 'Processando...' : 'Processar e Adicionar Itens'}
                 </Button>
 
-                {/* Botões de câmera e upload */}
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={handleCameraCapture}
-                    disabled={isScanning}
-                    className="flex-1"
-                  >
-                    <Camera className="w-4 h-4 mr-2" />
-                    Câmera
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    onClick={handleGalleryUpload}
-                    disabled={isScanning}
-                    className="flex-1"
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    Upload
-                  </Button>
-                </div>
-
-                {/* Input oculto para arquivo (câmera/galeria) */}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                />
-
                 {/* Card de dicas */}
-                <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-100 dark:border-blue-900">
+                <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
                   <div className="flex items-start gap-2">
                     <span className="text-lg">💡</span>
                     <div className="space-y-1">
-                      <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">Dica de uso:</p>
-                      <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside">
-                        <li>Certifique-se que cada produto esteja em uma linha separada</li>
-                        <li>Inclua o nome, quantidade e preço do produto</li>
-                        <li>Use formatos como: "Produto Quantidade Unidade Preço"</li>
-                        <li>As funções de câmera e upload serão implementadas em breve</li>
+                      <p className="text-sm font-semibold">Dicas de uso:</p>
+                      <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                        <li>Cole cada produto em uma linha separada</li>
+                        <li>O sistema reconhece nomes de produtos em português</li>
+                        <li>Quantidades e preços são extraídos automaticamente</li>
+                        <li>Formatos aceitos: "Produto 5kg R$4,50" ou "Produto 1L 3.80"</li>
                       </ul>
                     </div>
                   </div>
