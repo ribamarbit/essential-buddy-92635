@@ -240,11 +240,12 @@ const Login = ({ onLogin }: LoginProps) => {
         setIsLogin(true);
         resetForm();
       }
-    } catch (error: any) {
-      console.error("Erro na autenticação:", error);
+    } catch (error: unknown) {
+      // Não expor detalhes do erro em produção
+      const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro. Tente novamente.";
       toast({
         title: "Erro",
-        description: error.message || "Ocorreu um erro. Tente novamente.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -442,10 +443,24 @@ const Login = ({ onLogin }: LoginProps) => {
               onClick={async () => {
                 setLoading(true);
                 try {
-                  // Credenciais do usuário demo
+                  // Busca credenciais demo via edge function segura
+                  const response = await fetch(
+                    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-demo-credentials`,
+                    {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" }
+                    }
+                  );
+                  
+                  if (!response.ok) {
+                    throw new Error("Demo não disponível");
+                  }
+                  
+                  const { email, password } = await response.json();
+                  
                   const { error } = await supabase.auth.signInWithPassword({
-                    email: "demo@concierge.com",
-                    password: "Demo@123456"
+                    email,
+                    password
                   });
                   if (error) throw error;
                   toast({
@@ -453,7 +468,7 @@ const Login = ({ onLogin }: LoginProps) => {
                     description: "Bem-vindo ao modo demonstração!"
                   });
                   setTimeout(() => onLogin(), 500);
-                } catch (error: any) {
+                } catch {
                   toast({
                     title: "Erro",
                     description: "Usuário demo não disponível. Entre em contato com o suporte.",
