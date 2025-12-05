@@ -424,33 +424,31 @@ const ProductCatalog = () => {
                     {products.map((product) => (
                       <div
                         key={product.id}
-                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors gap-3"
                       >
                         {/* Informações do produto */}
-                        <div className="flex items-center space-x-4">
-                          <div className="text-2xl">{product.icon}</div>
-                          <div>
-                            <h3 className="font-medium">{product.name}</h3>
-                            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                              <Badge variant="secondary">{product.category}</Badge>
-                              <span>•</span>
+                        <div className="flex items-center space-x-3 min-w-0">
+                          <div className="text-2xl flex-shrink-0">{product.icon}</div>
+                          <div className="min-w-0">
+                            <h3 className="font-medium truncate">{product.name}</h3>
+                            <div className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
+                              <Badge variant="secondary" className="text-xs">{product.category}</Badge>
                               <span>{product.quantity} {product.unit}</span>
-                              <span>•</span>
                               <span className="font-medium text-green-600">R$ {product.price.toFixed(2)}</span>
                             </div>
                           </div>
                         </div>
                         
-                        {/* Botões de ação */}
-                        <div className="flex items-center space-x-2">
-                          {/* Botão: Adicionar à Lista de Compras */}
+                        {/* Botões de ação - compactos no mobile */}
+                        <div className="flex items-center gap-2 flex-shrink-0">
                           <Button 
                             variant="default" 
                             size="sm"
                             onClick={() => handleAddToShoppingList(product)}
+                            className="flex-1 sm:flex-none"
                           >
-                            <Plus className="w-4 h-4 mr-1" />
-                            Adicionar à Lista
+                            <Plus className="w-4 h-4 sm:mr-1" />
+                            <span className="hidden sm:inline">Adicionar</span>
                           </Button>
                           
                           {/* Modal de edição */}
