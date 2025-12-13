@@ -202,12 +202,12 @@ const ProductCatalog = () => {
    * @param product - Produto a ser adicionado
    */
   const handleAddToShoppingList = (product: Product) => {
-    // Cria item para a lista de compras
+    // Cria item para a lista de compras com prioridade válida
     const shoppingItem = {
       id: Date.now().toString(),
       name: product.name,
       icon: product.icon || "📦",
-      priority: "medium" as const,
+      priority: "normal" as "urgent" | "warning" | "normal",
       estimatedPrice: product.price
     };
 
@@ -228,6 +228,9 @@ const ProductCatalog = () => {
     const updatedList = [...currentList, shoppingItem];
     localStorage.setItem('shoppingList', JSON.stringify(updatedList));
     
+    // Dispara evento customizado para atualizar a lista na mesma aba
+    window.dispatchEvent(new CustomEvent('shoppingListUpdated'));
+    
     toast({
       title: "Adicionado à Lista de Compras! 🛒",
       description: `${product.name} foi adicionado à sua Lista de Compras.`
@@ -236,7 +239,7 @@ const ProductCatalog = () => {
 
   /**
    * Processa texto para extrair produtos (scanner)
-   * Simula processamento OCR/NLP para notas fiscais
+   * Adiciona produtos ao Dashboard como itens essenciais
    */
   const handleScanProcess = () => {
     if (!scanText.trim()) {
@@ -252,33 +255,43 @@ const ProductCatalog = () => {
     // Simula tempo de processamento
     setTimeout(() => {
       const lines = scanText.split('\n').filter(line => line.trim());
-      const extractedProducts: Product[] = [];
+      const extractedItems: any[] = [];
       
       // Tenta extrair produtos de cada linha usando regex
       lines.forEach(line => {
         // Regex para formato: "Nome Quantidade Unidade Preço"
         const match = line.match(/(.+?)\s+(\d+(?:\.\d+)?)\s*(\w+)?\s+R?\$?\s*(\d+[.,]\d{2})/i);
         if (match) {
-          const [, name, qty, unit, price] = match;
-          extractedProducts.push({
+          const [, name, qty, , price] = match;
+          const totalDays = Math.ceil(parseFloat(qty) * 7); // Estima duração baseada na quantidade
+          
+          extractedItems.push({
             id: Date.now().toString() + Math.random(),
             name: name.trim(),
-            category: "Outros",
-            price: parseFloat(price.replace(',', '.')),
-            quantity: parseFloat(qty),
-            unit: unit || "un",
-            icon: "📦"
+            icon: "📦",
+            totalDays: totalDays,
+            estimatedPrice: parseFloat(price.replace(',', '.')),
+            startDate: Date.now()
           });
         }
       });
 
-      if (extractedProducts.length > 0) {
-        // Adiciona produtos extraídos
-        setProducts(prev => [...prev, ...extractedProducts]);
+      if (extractedItems.length > 0) {
+        // Carrega itens existentes do dashboard
+        const existingDashboard = localStorage.getItem('dashboardEssentials');
+        const currentItems = existingDashboard ? JSON.parse(existingDashboard) : [];
+        
+        // Adiciona novos itens
+        const updatedItems = [...currentItems, ...extractedItems];
+        localStorage.setItem('dashboardEssentials', JSON.stringify(updatedItems));
+        
+        // Dispara evento para atualizar o dashboard
+        window.dispatchEvent(new CustomEvent('dashboardUpdated'));
+        
         setScanText("");
         toast({
-          title: `${extractedProducts.length} produtos extraídos! ✅`,
-          description: "Produtos foram adicionados automaticamente ao catálogo."
+          title: `${extractedItems.length} itens extraídos! ✅`,
+          description: "Itens foram adicionados ao Dashboard."
         });
       } else {
         toast({

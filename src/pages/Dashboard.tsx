@@ -76,12 +76,9 @@ const Dashboard = () => {
   const essentialItemNames = ['Café', 'Leite', 'Arroz', 'Feijão', 'Açúcar', 'Óleo'];
 
   /**
-   * Effect inicial para carregar dados do localStorage
-   * 
-   * Carrega itens essenciais e calcula dias restantes baseado no startDate
+   * Função para carregar itens essenciais do localStorage
    */
-  useEffect(() => {
-    // Tenta carregar itens essenciais do localStorage
+  const loadEssentialItems = () => {
     const storedEssentials = localStorage.getItem('dashboardEssentials');
     
     if (storedEssentials) {
@@ -118,8 +115,8 @@ const Dashboard = () => {
         });
         
         setEssentialItems(items);
-      } catch (error) {
-        console.error('Erro ao carregar itens essenciais:', error);
+      } catch {
+        // Erro silencioso - não expõe detalhes
       }
     } else {
       // Se não houver itens salvos, usa dados de exemplo
@@ -157,59 +154,56 @@ const Dashboard = () => {
         }
       ]);
     }
+  };
 
-    // Carrega lista de compras do localStorage
+  /**
+   * Função para carregar lista de compras
+   */
+  const loadShoppingList = () => {
     const storedList = localStorage.getItem('shoppingList');
     if (storedList) {
       try {
         setShoppingList(JSON.parse(storedList));
-      } catch (error) {
-        console.error('Erro ao carregar lista:', error);
+      } catch {
+        // Erro silencioso
       }
     }
+  };
+
+  /**
+   * Effect inicial para carregar dados e configurar listeners
+   */
+  useEffect(() => {
+    // Carrega dados iniciais
+    loadEssentialItems();
+    loadShoppingList();
+    
+    // Escuta atualizações do dashboard (scanner, etc.)
+    const handleDashboardUpdate = () => loadEssentialItems();
+    const handleShoppingListUpdate = () => loadShoppingList();
+    const handleFocus = () => {
+      loadEssentialItems();
+      loadShoppingList();
+    };
+    
+    window.addEventListener('dashboardUpdated', handleDashboardUpdate);
+    window.addEventListener('shoppingListUpdated', handleShoppingListUpdate);
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      window.removeEventListener('dashboardUpdated', handleDashboardUpdate);
+      window.removeEventListener('shoppingListUpdated', handleShoppingListUpdate);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   /**
    * Effect para atualização periódica dos dias restantes
-   * 
    * Executa a cada hora para recalcular os dias restantes
-   * Isso evita re-renderizações excessivas enquanto mantém os dados atualizados
    */
   useEffect(() => {
     const interval = setInterval(() => {
-      const storedEssentials = localStorage.getItem('dashboardEssentials');
-      
-      if (storedEssentials) {
-        try {
-          const essentials = JSON.parse(storedEssentials);
-          
-          // Recalcula dias restantes para cada item
-          const items: EssentialItem[] = essentials.map((item: any) => {
-            const startDate = item.startDate || Date.now();
-            const totalDays = item.totalDays || 30;
-            const daysPassed = Math.floor((Date.now() - startDate) / (1000 * 60 * 60 * 24));
-            const daysLeft = Math.max(0, totalDays - daysPassed);
-            
-            let status: "success" | "warning" | "urgent" = "success";
-            if (daysLeft <= 2) status = "urgent";
-            else if (daysLeft <= 5) status = "warning";
-            
-            return {
-              id: item.id || Date.now().toString(),
-              name: item.name,
-              icon: item.icon || "📦",
-              daysLeft,
-              totalDays,
-              status,
-              estimatedPrice: item.estimatedPrice || 5.0,
-              startDate
-            };
-          });
-          setEssentialItems(items);
-        } catch (error) {
-          console.error('Erro ao atualizar itens:', error);
-        }
-      }
+      loadEssentialItems();
     }, 3600000); // 3600000ms = 1 hora
 
     // Cleanup: limpa interval quando componente é desmontado

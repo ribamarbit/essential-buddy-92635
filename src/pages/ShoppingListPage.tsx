@@ -74,8 +74,8 @@ const ShoppingListPage = () => {
   };
 
   /**
-   * Carrega a lista na inicialização e quando a janela ganha foco
-   * Também escuta eventos de storage para sincronizar entre abas
+   * Carrega a lista na inicialização e quando há mudanças
+   * Escuta eventos customizados para sincronizar na mesma aba
    */
   useEffect(() => {
     // Carrega inicialmente
@@ -90,13 +90,18 @@ const ShoppingListPage = () => {
         loadShoppingList();
       }
     };
+    
+    // Escuta evento customizado para atualizações na mesma aba
+    const handleCustomUpdate = () => loadShoppingList();
 
     window.addEventListener('focus', handleFocus);
     window.addEventListener('storage', handleStorage);
+    window.addEventListener('shoppingListUpdated', handleCustomUpdate);
 
     return () => {
       window.removeEventListener('focus', handleFocus);
       window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('shoppingListUpdated', handleCustomUpdate);
     };
   }, []);
 
