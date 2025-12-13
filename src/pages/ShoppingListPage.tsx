@@ -57,18 +57,47 @@ const ShoppingListPage = () => {
   const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([]);
 
   /**
-   * Carrega a lista de compras do localStorage na inicialização
-   * Executado apenas uma vez quando o componente monta
+   * Função para carregar a lista do localStorage
    */
-  useEffect(() => {
+  const loadShoppingList = () => {
     const storedList = localStorage.getItem('shoppingList');
     if (storedList) {
       try {
-        setShoppingList(JSON.parse(storedList));
-      } catch (error) {
-        console.error('Erro ao carregar lista:', error);
+        const parsed = JSON.parse(storedList);
+        setShoppingList(parsed);
+      } catch {
+        setShoppingList([]);
       }
+    } else {
+      setShoppingList([]);
     }
+  };
+
+  /**
+   * Carrega a lista na inicialização e quando a janela ganha foco
+   * Também escuta eventos de storage para sincronizar entre abas
+   */
+  useEffect(() => {
+    // Carrega inicialmente
+    loadShoppingList();
+
+    // Recarrega quando a janela ganha foco (usuário voltou para a aba)
+    const handleFocus = () => loadShoppingList();
+    
+    // Escuta mudanças no localStorage de outras abas
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'shoppingList') {
+        loadShoppingList();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('storage', handleStorage);
+    };
   }, []);
 
   /**
