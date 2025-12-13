@@ -60,15 +60,20 @@ const ShoppingListPage = () => {
    * Função para carregar a lista do localStorage
    */
   const loadShoppingList = () => {
-    const storedList = localStorage.getItem('shoppingList');
-    if (storedList) {
-      try {
+    try {
+      const storedList = localStorage.getItem('shoppingList');
+      if (storedList) {
         const parsed = JSON.parse(storedList);
-        setShoppingList(parsed);
-      } catch {
+        if (Array.isArray(parsed)) {
+          setShoppingList(parsed);
+        } else {
+          setShoppingList([]);
+        }
+      } else {
         setShoppingList([]);
       }
-    } else {
+    } catch {
+      console.error('Erro ao carregar lista de compras');
       setShoppingList([]);
     }
   };
@@ -81,8 +86,10 @@ const ShoppingListPage = () => {
     // Carrega inicialmente
     loadShoppingList();
 
-    // Recarrega quando a janela ganha foco (usuário voltou para a aba)
-    const handleFocus = () => loadShoppingList();
+    // Recarrega quando a janela ganha foco
+    const handleFocus = () => {
+      loadShoppingList();
+    };
     
     // Escuta mudanças no localStorage de outras abas
     const handleStorage = (e: StorageEvent) => {
@@ -92,13 +99,21 @@ const ShoppingListPage = () => {
     };
     
     // Escuta evento customizado para atualizações na mesma aba
-    const handleCustomUpdate = () => loadShoppingList();
+    const handleCustomUpdate = () => {
+      loadShoppingList();
+    };
+
+    // Polling a cada 1 segundo como fallback para garantir sincronização
+    const interval = setInterval(() => {
+      loadShoppingList();
+    }, 1000);
 
     window.addEventListener('focus', handleFocus);
     window.addEventListener('storage', handleStorage);
     window.addEventListener('shoppingListUpdated', handleCustomUpdate);
 
     return () => {
+      clearInterval(interval);
       window.removeEventListener('focus', handleFocus);
       window.removeEventListener('storage', handleStorage);
       window.removeEventListener('shoppingListUpdated', handleCustomUpdate);
