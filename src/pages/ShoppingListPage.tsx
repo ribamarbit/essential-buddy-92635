@@ -290,9 +290,9 @@ const ShoppingListPage = () => {
 
         {/* ================================================================
             COMPONENTE DA LISTA DE COMPRAS
-            Centralizado com largura máxima
+            Responsivo: maior em desktop, centralizado
             ================================================================ */}
-        <div className="max-w-md mx-auto">
+        <div className="w-full max-w-2xl mx-auto">
           <ShoppingList
             items={shoppingList}
             onRemoveItem={handleRemoveFromCart}
