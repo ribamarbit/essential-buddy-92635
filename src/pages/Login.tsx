@@ -443,21 +443,25 @@ const Login = ({ onLogin }: LoginProps) => {
               onClick={async () => {
                 setLoading(true);
                 try {
-                  // Busca credenciais demo via edge function segura
-                  const response = await fetch(
-                    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-demo-credentials`,
+                  // Primeiro garante que o usuário demo existe (cria se necessário)
+                  const createResponse = await fetch(
+                    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-demo-user`,
                     {
                       method: "POST",
                       headers: { "Content-Type": "application/json" }
                     }
                   );
                   
-                  if (!response.ok) {
-                    throw new Error("Demo não disponível");
+                  let email = "demo@concierge.com";
+                  let password = "Demo@123456";
+                  
+                  if (createResponse.ok) {
+                    const createData = await createResponse.json();
+                    if (createData.email) email = createData.email;
+                    if (createData.password) password = createData.password;
                   }
                   
-                  const { email, password } = await response.json();
-                  
+                  // Faz login com as credenciais demo
                   const { error } = await supabase.auth.signInWithPassword({
                     email,
                     password

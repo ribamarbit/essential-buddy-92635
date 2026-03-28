@@ -77,29 +77,36 @@ serve(async (req: Request) => {
     const demoEmail = Deno.env.get("DEMO_USER_EMAIL") || "demo@concierge.com";
     const demoPassword = Deno.env.get("DEMO_USER_PASSWORD") || "Demo@123456";
 
-    // Tenta criar usuário demo
-    const { data, error } = await supabaseAdmin.auth.admin.createUser({
-      email: demoEmail,
-      password: demoPassword,
-      email_confirm: true,
-      user_metadata: {
-        nome_completo: "Usuário Demo",
-        login: "demo"
-      }
-    });
+    // Verifica se o usuário demo já existe
+    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+    const demoExists = existingUsers?.users?.some(u => u.email === demoEmail);
 
-    if (error) {
-      // Log genérico (sem expor detalhes sensíveis)
-      console.log("[INFO] Demo user creation attempted");
-      return new Response(
-        JSON.stringify({ error: "Não foi possível criar usuário demo." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (!demoExists) {
+      // Cria usuário demo com email já confirmado
+      const { error } = await supabaseAdmin.auth.admin.createUser({
+        email: demoEmail,
+        password: demoPassword,
+        email_confirm: true,
+        user_metadata: {
+          nome_completo: "Usuário Demo",
+          login: "demo"
+        }
+      });
+
+      if (error) {
+        console.log("[INFO] Demo user creation failed");
+        return new Response(
+          JSON.stringify({ error: "Não foi possível criar usuário demo." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      console.log("[INFO] Demo user created successfully");
+    } else {
+      console.log("[INFO] Demo user already exists");
     }
 
-    console.log("[INFO] Demo user operation completed");
     return new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({ success: true, email: demoEmail, password: demoPassword }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {
