@@ -66,51 +66,61 @@ serve(async (req: Request) => {
       );
     }
 
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.log("[ERROR] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+      return new Response(
+        JSON.stringify({ error: "Configuração do servidor incompleta." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Cria cliente Supabase com chave de serviço
     const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      supabaseUrl,
+      serviceRoleKey,
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    // Credenciais do usuário demo (gerenciadas no servidor)
+    // Credenciais do usuário demo
     const demoEmail = Deno.env.get("DEMO_USER_EMAIL") || "demo@concierge.com";
     const demoPassword = Deno.env.get("DEMO_USER_PASSWORD") || "Demo@123456";
 
-    // Verifica se o usuário demo já existe
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-    const demoExists = existingUsers?.users?.some(u => u.email === demoEmail);
-
-    if (!demoExists) {
-      // Cria usuário demo com email já confirmado
-      const { error } = await supabaseAdmin.auth.admin.createUser({
-        email: demoEmail,
-        password: demoPassword,
-        email_confirm: true,
-        user_metadata: {
-          nome_completo: "Usuário Demo",
-          login: "demo"
-        }
-      });
-
-      if (error) {
-        console.log("[INFO] Demo user creation failed");
-        return new Response(
-          JSON.stringify({ error: "Não foi possível criar usuário demo." }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+    // Tenta criar o usuário demo
+    const { data, error } = await supabaseAdmin.auth.admin.createUser({
+      email: demoEmail,
+      password: demoPassword,
+      email_confirm: true,
+      user_metadata: {
+        nome_completo: "Usuário Demo",
+        login: "demo"
       }
-      console.log("[INFO] Demo user created successfully");
+    });
+
+    if (error) {
+      // Se já existe, tudo bem - retorna credenciais mesmo assim
+      const alreadyExists = error.message?.includes("already") || 
+                            error.message?.includes("duplicate") ||
+                            error.message?.includes("unique") ||
+                            error.status === 422;
+      
+      if (alreadyExists) {
+        console.log("[INFO] Demo user already exists, returning credentials");
+      } else {
+        console.log("[WARN] Demo user creation error:", error.message);
+      }
     } else {
-      console.log("[INFO] Demo user already exists");
+      console.log("[INFO] Demo user created successfully");
     }
 
+    // Sempre retorna credenciais para login
     return new Response(
       JSON.stringify({ success: true, email: demoEmail, password: demoPassword }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {
-    // Log genérico sem expor stack trace ou mensagens internas
     console.log("[ERROR] Internal error in demo user creation");
     return new Response(
       JSON.stringify({ error: "Erro interno. Tente novamente." }),
