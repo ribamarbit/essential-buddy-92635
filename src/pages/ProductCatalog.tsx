@@ -1,697 +1,352 @@
-/**
- * =============================================================================
- * PRODUCTCATALOG.TSX - Catálogo de Produtos
- * =============================================================================
- * 
- * Esta página gerencia o catálogo de produtos do usuário.
- * Diferente de "AddItems" (que vai pro Dashboard), produtos aqui vão para
- * a Lista de Compras quando o usuário clica em "Adicionar à Lista".
- * 
- * Funcionalidades:
- * - Visualizar produtos cadastrados
- * - Adicionar novos produtos manualmente
- * - Editar produtos existentes
- * - Remover produtos
- * - Adicionar produtos à Lista de Compras
- * - Estatísticas (total de produtos, quantidade, valor)
- * 
- * Fluxo de dados:
- * Produtos → localStorage (catalogProducts) → Lista de Compras (shoppingList)
- * 
- * =============================================================================
- */
-
-// Importações do React
-import { useState, useEffect } from "react";
-import { useRef } from "react";
-
-// Componentes de UI
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-
-// Hooks
 import { useToast } from "@/hooks/use-toast";
+import { Plus, Trash2, Edit3, Search } from "lucide-react";
 
-// Ícones
-import { Plus, Scan, Trash2, Edit3, Camera, Upload } from "lucide-react";
-
-/**
- * Interface que define a estrutura de um produto
- */
 interface Product {
-  id: string;           // Identificador único
-  name: string;         // Nome do produto
-  category: string;     // Categoria (Grãos, Laticínios, etc.)
-  price: number;        // Preço unitário
-  quantity: number;     // Quantidade
-  unit: string;         // Unidade de medida (un, kg, L, etc.)
-  icon?: string;        // Emoji representativo (opcional)
+  id: string; name: string; category: string; price: number; quantity: number; unit: string; icon?: string;
 }
 
-/**
- * Componente principal do Catálogo de Produtos
- */
 const ProductCatalog = () => {
-  // Hook para notificações toast
   const { toast } = useToast();
-  
-  // Estado da lista de produtos
   const [products, setProducts] = useState<Product[]>([]);
-
-  /**
-   * Carrega produtos do localStorage na inicialização
-   * Se não houver produtos salvos, cria dados padrão de exemplo
-   */
-  useEffect(() => {
-    const storedProducts = localStorage.getItem('catalogProducts');
-    if (storedProducts) {
-      try {
-        setProducts(JSON.parse(storedProducts));
-      } catch (error) {
-        console.error('Erro ao carregar produtos:', error);
-      }
-    } else {
-      // Produtos padrão para demonstração
-      const defaultProducts = [
-        { id: "1", name: "Arroz", category: "Grãos", price: 4.50, quantity: 5, unit: "kg", icon: "🍚" },
-        { id: "2", name: "Feijão", category: "Grãos", price: 6.20, quantity: 2, unit: "kg", icon: "🫘" },
-        { id: "3", name: "Leite", category: "Laticínios", price: 3.80, quantity: 1, unit: "L", icon: "🥛" },
-      ];
-      setProducts(defaultProducts);
-      localStorage.setItem('catalogProducts', JSON.stringify(defaultProducts));
-    }
-  }, []);
-  
-  // Estado do formulário de novo produto
-  const [newProduct, setNewProduct] = useState({
-    name: "", category: "", price: "", quantity: "", unit: "un", icon: ""
-  });
-  
-  // Estado para edição de produto
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("Todos");
+  const [newProduct, setNewProduct] = useState({ name: "", category: "", price: "", quantity: "", unit: "un", icon: "" });
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  
-  // Estado do scanner (funcionalidade futura)
   const [scanText, setScanText] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Listas de categorias e unidades disponíveis
   const categories = ["Grãos", "Laticínios", "Carnes", "Verduras", "Frutas", "Limpeza", "Higiene", "Bebidas", "Outros"];
   const units = ["un", "kg", "g", "L", "ml", "pacote", "caixa"];
 
-  /**
-   * Adiciona um novo produto ao catálogo
-   * Valida campos obrigatórios antes de salvar
-   */
-  const handleAddProduct = () => {
-    // Validação de campos obrigatórios
-    if (!newProduct.name || !newProduct.price || !newProduct.quantity) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Nome, preço e quantidade são obrigatórios.",
-      });
-      return;
+  useEffect(() => {
+    const stored = localStorage.getItem('catalogProducts');
+    if (stored) { try { setProducts(JSON.parse(stored)); } catch {} }
+    else {
+      const defaults = [
+        { id: "1", name: "Arroz Agulhinha Premium", category: "Grãos", price: 28.90, quantity: 5, unit: "kg", icon: "🍚" },
+        { id: "2", name: "Feijão Preto Selecionado", category: "Grãos", price: 9.45, quantity: 1, unit: "kg", icon: "🫘" },
+        { id: "3", name: "Azeite Extra Virgem", category: "Outros", price: 42.00, quantity: 1, unit: "un", icon: "🫒" },
+        { id: "4", name: "Farinha de Trigo Orgânica", category: "Grãos", price: 12.30, quantity: 1, unit: "kg", icon: "🌾" },
+      ];
+      setProducts(defaults);
+      localStorage.setItem('catalogProducts', JSON.stringify(defaults));
     }
+  }, []);
 
-    // Cria o objeto do produto
-    const product: Product = {
-      id: Date.now().toString(),
-      name: newProduct.name,
-      category: newProduct.category || "Outros",
-      price: parseFloat(newProduct.price),
-      quantity: parseInt(newProduct.quantity),
-      unit: newProduct.unit,
-      icon: newProduct.icon || "📦"
-    };
-
-    // Atualiza estado e localStorage
-    const updatedProducts = [...products, product];
-    setProducts(updatedProducts);
-    localStorage.setItem('catalogProducts', JSON.stringify(updatedProducts));
-    
-    // Limpa o formulário
+  const handleAddProduct = () => {
+    if (!newProduct.name || !newProduct.price || !newProduct.quantity) { toast({ title: "Campos obrigatórios", description: "Nome, preço e quantidade são obrigatórios." }); return; }
+    const product: Product = { id: Date.now().toString(), name: newProduct.name, category: newProduct.category || "Outros", price: parseFloat(newProduct.price), quantity: parseInt(newProduct.quantity), unit: newProduct.unit, icon: newProduct.icon || "📦" };
+    const updated = [...products, product];
+    setProducts(updated);
+    localStorage.setItem('catalogProducts', JSON.stringify(updated));
     setNewProduct({ name: "", category: "", price: "", quantity: "", unit: "un", icon: "" });
-    
-    toast({
-      title: "Produto adicionado! ✅",
-      description: `${product.name} foi cadastrado com sucesso.`
-    });
+    toast({ title: "Produto adicionado! ✅", description: `${product.name} foi cadastrado.` });
   };
 
-  /**
-   * Remove um produto do catálogo
-   * 
-   * @param id - ID do produto a ser removido
-   */
   const handleRemoveProduct = (id: string) => {
-    const product = products.find(p => p.id === id);
-    const updatedProducts = products.filter(p => p.id !== id);
-    setProducts(updatedProducts);
-    localStorage.setItem('catalogProducts', JSON.stringify(updatedProducts));
-    
-    toast({
-      title: "Produto removido",
-      description: `${product?.name} foi removido do catálogo.`
-    });
+    const p = products.find(p => p.id === id);
+    const updated = products.filter(p => p.id !== id);
+    setProducts(updated);
+    localStorage.setItem('catalogProducts', JSON.stringify(updated));
+    toast({ title: "Produto removido", description: `${p?.name} foi removido.` });
   };
 
-  /**
-   * Abre o modal de edição com os dados do produto
-   * 
-   * @param product - Produto a ser editado
-   */
-  const handleEditProduct = (product: Product) => {
-    setEditingProduct(product);
-    setIsEditDialogOpen(true);
-  };
-
-  /**
-   * Salva as alterações do produto editado
-   */
   const handleSaveEditedProduct = () => {
     if (!editingProduct) return;
-    
-    // Atualiza o produto na lista
-    const updatedProducts = products.map(p => 
-      p.id === editingProduct.id ? editingProduct : p
-    );
-    setProducts(updatedProducts);
-    localStorage.setItem('catalogProducts', JSON.stringify(updatedProducts));
-    
-    // Fecha o modal
+    const updated = products.map(p => p.id === editingProduct.id ? editingProduct : p);
+    setProducts(updated);
+    localStorage.setItem('catalogProducts', JSON.stringify(updated));
     setIsEditDialogOpen(false);
     setEditingProduct(null);
-    
-    toast({
-      title: "Produto atualizado! ✅",
-      description: `${editingProduct.name} foi atualizado com sucesso.`
-    });
+    toast({ title: "Produto atualizado! ✅" });
   };
 
-  /**
-   * Adiciona um produto à Lista de Compras
-   * Verifica se já existe na lista antes de adicionar
-   * 
-   * @param product - Produto a ser adicionado
-   */
   const handleAddToShoppingList = (product: Product) => {
-    // Cria item para a lista de compras com prioridade válida
-    const shoppingItem = {
-      id: Date.now().toString(),
-      name: product.name,
-      icon: product.icon || "📦",
-      priority: "normal" as "urgent" | "warning" | "normal",
-      estimatedPrice: product.price
-    };
-
-    // Carrega lista existente
-    const existingList = localStorage.getItem('shoppingList');
-    const currentList = existingList ? JSON.parse(existingList) : [];
-    
-    // Verifica se já existe na lista
-    if (currentList.some((item: any) => item.name === product.name)) {
-      toast({
-        title: "Item já na lista",
-        description: `${product.name} já está na sua Lista de Compras.`
-      });
-      return;
-    }
-
-    // Adiciona à lista e salva
-    const updatedList = [...currentList, shoppingItem];
-    localStorage.setItem('shoppingList', JSON.stringify(updatedList));
-    
-    // Dispara evento customizado para atualizar a lista na mesma aba
+    const shoppingItem = { id: Date.now().toString(), name: product.name, icon: product.icon || "📦", priority: "normal" as const, estimatedPrice: product.price };
+    const existing = localStorage.getItem('shoppingList');
+    const currentList = existing ? JSON.parse(existing) : [];
+    if (currentList.some((i: any) => i.name === product.name)) { toast({ title: "Item já na lista", description: `${product.name} já está na Lista de Compras.` }); return; }
+    const updated = [...currentList, shoppingItem];
+    localStorage.setItem('shoppingList', JSON.stringify(updated));
     window.dispatchEvent(new CustomEvent('shoppingListUpdated'));
-    
-    toast({
-      title: "Adicionado à Lista de Compras! 🛒",
-      description: `${product.name} foi adicionado à sua Lista de Compras.`
-    });
+    toast({ title: "Adicionado à Lista! 🛒", description: `${product.name} foi adicionado.` });
   };
 
-  /**
-   * Processa texto para extrair produtos (scanner)
-   * Adiciona produtos ao Dashboard como itens essenciais
-   */
   const handleScanProcess = () => {
-    if (!scanText.trim()) {
-      toast({
-        title: "Texto vazio",
-        description: "Cole o texto da nota fiscal ou lista de compras para processar."
-      });
-      return;
-    }
-
+    if (!scanText.trim()) { toast({ title: "Texto vazio" }); return; }
     setIsProcessing(true);
-    
-    // Simula tempo de processamento
     setTimeout(() => {
-      const lines = scanText.split('\n').filter(line => line.trim());
-      const extractedItems: any[] = [];
-      
-      // Tenta extrair produtos de cada linha usando regex
+      const lines = scanText.split('\n').filter(l => l.trim());
+      const extracted: any[] = [];
       lines.forEach(line => {
-        // Regex para formato: "Nome Quantidade Unidade Preço"
         const match = line.match(/(.+?)\s+(\d+(?:\.\d+)?)\s*(\w+)?\s+R?\$?\s*(\d+[.,]\d{2})/i);
         if (match) {
           const [, name, qty, , price] = match;
-          const totalDays = Math.ceil(parseFloat(qty) * 7); // Estima duração baseada na quantidade
-          
-          extractedItems.push({
-            id: Date.now().toString() + Math.random(),
-            name: name.trim(),
-            icon: "📦",
-            totalDays: totalDays,
-            estimatedPrice: parseFloat(price.replace(',', '.')),
-            startDate: Date.now()
-          });
+          extracted.push({ id: Date.now().toString() + Math.random(), name: name.trim(), icon: "📦", totalDays: Math.ceil(parseFloat(qty) * 7), estimatedPrice: parseFloat(price.replace(',', '.')), startDate: Date.now() });
         }
       });
-
-      if (extractedItems.length > 0) {
-        // Carrega itens existentes do dashboard
-        const existingDashboard = localStorage.getItem('dashboardEssentials');
-        const currentItems = existingDashboard ? JSON.parse(existingDashboard) : [];
-        
-        // Adiciona novos itens
-        const updatedItems = [...currentItems, ...extractedItems];
-        localStorage.setItem('dashboardEssentials', JSON.stringify(updatedItems));
-        
-        // Dispara evento para atualizar o dashboard
+      if (extracted.length > 0) {
+        const existing = localStorage.getItem('dashboardEssentials');
+        const current = existing ? JSON.parse(existing) : [];
+        localStorage.setItem('dashboardEssentials', JSON.stringify([...current, ...extracted]));
         window.dispatchEvent(new CustomEvent('dashboardUpdated'));
-        
         setScanText("");
-        toast({
-          title: `${extractedItems.length} itens extraídos! ✅`,
-          description: "Itens foram adicionados ao Dashboard."
-        });
+        toast({ title: `${extracted.length} itens extraídos! ✅`, description: "Itens foram adicionados ao Dashboard." });
       } else {
-        toast({
-          title: "Nenhum produto encontrado",
-          description: "Não foi possível extrair produtos do texto. Tente um formato diferente."
-        });
+        toast({ title: "Nenhum produto encontrado" });
       }
-      
       setIsProcessing(false);
     }, 2000);
   };
 
-  /**
-   * Placeholder para funcionalidade de câmera
-   * A ser implementada com integração de OCR
-   */
-  const handleCameraCapture = () => {
-    toast({
-      title: "Câmera em desenvolvimento",
-      description: "Esta funcionalidade será implementada em breve para capturar imagens de notas fiscais."
-    });
+  const totalValue = products.reduce((s, p) => s + (p.price * p.quantity), 0);
+  const filteredProducts = products.filter(p => {
+    const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchCat = selectedCategory === "Todos" || p.category === selectedCategory;
+    return matchSearch && matchCat;
+  });
+
+  const allCategories = ["Todos", ...new Set(products.map(p => p.category))];
+
+  const getStockStatus = (quantity: number) => {
+    if (quantity <= 2) return { label: "Baixo Estoque", bg: "bg-tertiary-fixed text-tertiary", accent: true };
+    return { label: "Em Estoque", bg: "bg-primary-fixed text-primary", accent: false };
   };
 
-  /**
-   * Abre seletor de arquivos para upload
-   */
-  const handleFileUpload = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-
-  /**
-   * Processa arquivo selecionado
-   * Placeholder para processamento de imagem
-   */
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      toast({
-        title: "Upload em desenvolvimento",
-        description: `Arquivo ${file.name} será processado quando a funcionalidade estiver completa.`
-      });
-    }
-  };
-
-  // Calcula valor total do catálogo
-  const totalValue = products.reduce((sum, product) => sum + (product.price * product.quantity), 0);
-
-  // ==========================================================================
-  // RENDERIZAÇÃO DO COMPONENTE
-  // ==========================================================================
   return (
-    <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-8 space-y-8">
-        {/* ================================================================
-            CABEÇALHO DA PÁGINA
-            ================================================================ */}
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-foreground">
-            Catálogo de Produtos
-          </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Gerencie seus produtos, quantidades e preços. Use o scanner para importar listas automaticamente.
-          </p>
-        </div>
+    <div className="min-h-screen bg-background pb-32 md:pb-8">
+      <main className="max-w-7xl mx-auto px-6 pt-8">
+        {/* Summary Header */}
+        <section className="mb-12 grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
+          <div className="lg:col-span-7">
+            <p className="font-label text-sm uppercase tracking-[0.2em] text-muted-foreground mb-2">Resumo de Ativos</p>
+            <h2 className="font-headline text-5xl md:text-7xl font-extrabold tracking-tighter text-foreground">
+              R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </h2>
+            <p className="text-muted-foreground mt-4 max-w-md leading-relaxed">
+              Valor total estimado em estoque. Otimize sua reposição baseada nas métricas de saída diária.
+            </p>
+          </div>
+          <div className="lg:col-span-5 flex flex-col gap-4">
+            <div className="bg-surface-container-low p-6 rounded-xl flex items-center justify-between">
+              <div>
+                <p className="font-label text-xs uppercase tracking-widest text-muted-foreground">Total de Produtos</p>
+                <p className="text-2xl font-bold text-foreground">{products.length} SKUs</p>
+              </div>
+              <div className="h-12 w-1 bg-primary-container rounded-full" />
+            </div>
+            <div className="bg-primary-container p-6 rounded-xl flex items-center justify-between text-white shadow-lg shadow-primary/10">
+              <div>
+                <p className="font-label text-xs uppercase tracking-widest opacity-80">Quantidade Total</p>
+                <p className="text-2xl font-bold">{products.reduce((s, p) => s + p.quantity, 0)} un</p>
+              </div>
+            </div>
+          </div>
+        </section>
 
-        {/* ================================================================
-            CARDS DE ESTATÍSTICAS
-            ================================================================ */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Total de produtos */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2">
-                <div className="text-2xl">📦</div>
-                <div>
-                  <p className="text-2xl font-bold">{products.length}</p>
-                  <p className="text-sm text-muted-foreground">Produtos</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Quantidade total */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2">
-                <div className="text-2xl">📊</div>
-                <div>
-                  <p className="text-2xl font-bold">{products.reduce((sum, p) => sum + p.quantity, 0)}</p>
-                  <p className="text-sm text-muted-foreground">Quantidade Total</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Valor total */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2">
-                <div className="text-2xl">💰</div>
-                <div>
-                  <p className="text-2xl font-bold">R$ {totalValue.toFixed(2)}</p>
-                  <p className="text-sm text-muted-foreground">Valor Total</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Search & Filters */}
+        <section className="mb-10 flex flex-col md:flex-row gap-4 justify-between items-center">
+          <div className="relative w-full md:w-96 group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+            <input
+              className="w-full pl-12 pr-4 py-4 bg-surface-container-highest border-none rounded-lg focus:ring-0 focus:bg-surface-container-lowest transition-all placeholder:text-muted-foreground/60 font-medium"
+              placeholder="Buscar produtos..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-2 w-full md:w-auto no-scrollbar">
+            {allCategories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                  selectedCategory === cat
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-surface-container-high text-muted-foreground hover:bg-surface-variant'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </section>
 
-        {/* ================================================================
-            ABAS: CATÁLOGO E ADICIONAR
-            ================================================================ */}
+        {/* Tabs */}
         <Tabs defaultValue="catalog" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="catalog">Catálogo</TabsTrigger>
-            <TabsTrigger value="add">Adicionar</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 mb-8 bg-surface-container-high rounded-full p-1">
+            <TabsTrigger value="catalog" className="rounded-full">Catálogo</TabsTrigger>
+            <TabsTrigger value="add" className="rounded-full">Adicionar</TabsTrigger>
+            <TabsTrigger value="scanner" className="rounded-full">Scanner</TabsTrigger>
           </TabsList>
-          
-          {/* ==============================================================
-              ABA: CATÁLOGO
-              Lista de produtos cadastrados
-              ============================================================== */}
-          <TabsContent value="catalog" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Produtos Cadastrados</CardTitle>
-                <CardDescription>
-                  Clique em "Adicionar à Lista" para enviar produtos para sua Lista de Compras
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {/* Estado vazio */}
-                {products.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="text-4xl mb-4">📦</div>
-                    <p className="text-muted-foreground">Nenhum produto cadastrado ainda</p>
-                  </div>
-                ) : (
-                  /* Lista de produtos */
-                  <div className="grid gap-4">
-                    {products.map((product) => (
-                      <div
-                        key={product.id}
-                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors gap-3"
-                      >
-                        {/* Informações do produto */}
-                        <div className="flex items-center space-x-3 min-w-0">
-                          <div className="text-2xl flex-shrink-0">{product.icon}</div>
-                          <div className="min-w-0">
-                            <h3 className="font-medium truncate">{product.name}</h3>
-                            <div className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
-                              <Badge variant="secondary" className="text-xs">{product.category}</Badge>
-                              <span>{product.quantity} {product.unit}</span>
-                              <span className="font-medium text-green-600">R$ {product.price.toFixed(2)}</span>
-                            </div>
+
+          {/* Catalog Tab - Card Grid */}
+          <TabsContent value="catalog">
+            {filteredProducts.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="text-5xl mb-4">📦</div>
+                <p className="text-muted-foreground">Nenhum produto encontrado</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                {filteredProducts.map(product => {
+                  const stock = getStockStatus(product.quantity);
+                  return (
+                    <div key={product.id} className="group relative flex flex-col bg-surface-container-highest rounded-xl overflow-hidden transition-all hover:translate-y-[-4px] hover:shadow-float">
+                      {/* Product image area */}
+                      <div className="aspect-[4/3] overflow-hidden relative bg-surface-container-high flex items-center justify-center">
+                        <span className="text-7xl">{product.icon}</span>
+                        <div className="absolute top-4 left-4">
+                          <span className={`${stock.bg} px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest`}>
+                            {stock.label}
+                          </span>
+                        </div>
+                        {stock.accent && <div className="absolute left-0 top-0 bottom-0 w-1 bg-tertiary-container" />}
+                      </div>
+                      {/* Product info */}
+                      <div className="p-6 flex flex-col flex-grow">
+                        <div className="mb-4">
+                          <h3 className="font-headline text-lg font-bold text-foreground">{product.name}</h3>
+                          <p className="text-xs font-label uppercase tracking-widest text-muted-foreground mt-1">{product.category} • {product.quantity} {product.unit}</p>
+                        </div>
+                        <div className="mt-auto flex items-end justify-between">
+                          <p className="text-2xl font-extrabold text-foreground">R$ {product.price.toFixed(2)}</p>
+                          <div className="flex gap-1">
+                            <button onClick={() => handleAddToShoppingList(product)} className="w-10 h-10 rounded-full bg-primary-container text-white flex items-center justify-center active:scale-90 transition-transform">
+                              <Plus className="w-5 h-5" />
+                            </button>
+                            <button onClick={() => { setEditingProduct(product); setIsEditDialogOpen(true); }} className="w-10 h-10 rounded-full bg-surface-variant text-muted-foreground flex items-center justify-center active:scale-90 transition-transform hover:bg-surface-container-high">
+                              <Edit3 className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => handleRemoveProduct(product.id)} className="w-10 h-10 rounded-full bg-surface-variant text-muted-foreground flex items-center justify-center active:scale-90 transition-transform hover:bg-tertiary-fixed hover:text-tertiary">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
-                        
-                        {/* Botões de ação - compactos no mobile */}
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <Button 
-                            variant="default" 
-                            size="sm"
-                            onClick={() => handleAddToShoppingList(product)}
-                            className="flex-1 sm:flex-none"
-                          >
-                            <Plus className="w-4 h-4 sm:mr-1" />
-                            <span className="hidden sm:inline">Adicionar</span>
-                          </Button>
-                          
-                          {/* Modal de edição */}
-                          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                            <DialogTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleEditProduct(product)}
-                              >
-                                <Edit3 className="w-4 h-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Editar Produto</DialogTitle>
-                                <DialogDescription>
-                                  Atualize as informações do produto.
-                                </DialogDescription>
-                              </DialogHeader>
-                              {/* Formulário de edição */}
-                              {editingProduct && (
-                                <div className="grid gap-4">
-                                  <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                      <Label htmlFor="edit-name">Nome</Label>
-                                      <Input
-                                        id="edit-name"
-                                        value={editingProduct.name}
-                                        onChange={(e) => setEditingProduct(prev => 
-                                          prev ? { ...prev, name: e.target.value } : null
-                                        )}
-                                      />
-                                    </div>
-                                    <div className="space-y-2">
-                                      <Label htmlFor="edit-category">Categoria</Label>
-                                      <select
-                                        id="edit-category"
-                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                        value={editingProduct.category}
-                                        onChange={(e) => setEditingProduct(prev => 
-                                          prev ? { ...prev, category: e.target.value } : null
-                                        )}
-                                      >
-                                        {categories.map(cat => (
-                                          <option key={cat} value={cat}>{cat}</option>
-                                        ))}
-                                      </select>
-                                    </div>
-                                  </div>
-                                  <div className="grid grid-cols-3 gap-4">
-                                    <div className="space-y-2">
-                                      <Label htmlFor="edit-price">Preço</Label>
-                                      <Input
-                                        id="edit-price"
-                                        type="number"
-                                        step="0.01"
-                                        value={editingProduct.price}
-                                        onChange={(e) => setEditingProduct(prev => 
-                                          prev ? { ...prev, price: parseFloat(e.target.value) || 0 } : null
-                                        )}
-                                      />
-                                    </div>
-                                    <div className="space-y-2">
-                                      <Label htmlFor="edit-quantity">Quantidade</Label>
-                                      <Input
-                                        id="edit-quantity"
-                                        type="number"
-                                        value={editingProduct.quantity}
-                                        onChange={(e) => setEditingProduct(prev => 
-                                          prev ? { ...prev, quantity: parseInt(e.target.value) || 0 } : null
-                                        )}
-                                      />
-                                    </div>
-                                    <div className="space-y-2">
-                                      <Label htmlFor="edit-unit">Unidade</Label>
-                                      <select
-                                        id="edit-unit"
-                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                        value={editingProduct.unit}
-                                        onChange={(e) => setEditingProduct(prev => 
-                                          prev ? { ...prev, unit: e.target.value } : null
-                                        )}
-                                      >
-                                        {units.map(unit => (
-                                          <option key={unit} value={unit}>{unit}</option>
-                                        ))}
-                                      </select>
-                                    </div>
-                                  </div>
-                                  <div className="space-y-2">
-                                    <Label htmlFor="edit-icon">Emoji</Label>
-                                    <Input
-                                      id="edit-icon"
-                                      value={editingProduct.icon}
-                                      onChange={(e) => setEditingProduct(prev => 
-                                        prev ? { ...prev, icon: e.target.value } : null
-                                      )}
-                                    />
-                                  </div>
-                                </div>
-                              )}
-                              <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                                  Cancelar
-                                </Button>
-                                <Button onClick={handleSaveEditedProduct}>
-                                  Salvar Alterações
-                                </Button>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
-                          
-                          {/* Botão: Remover produto */}
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => handleRemoveProduct(product.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </TabsContent>
-          
-          {/* ==============================================================
-              ABA: ADICIONAR
-              Formulário para novo produto
-              ============================================================== */}
-          <TabsContent value="add" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Adicionar Produto</CardTitle>
-                <CardDescription>
-                  Cadastre um novo produto manualmente
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Campo: Nome do produto */}
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nome do Produto</Label>
-                    <Input
-                      id="name"
-                      placeholder="Ex: Arroz integral"
-                      value={newProduct.name}
-                      onChange={(e) => setNewProduct(prev => ({ ...prev, name: e.target.value }))}
-                    />
-                  </div>
-                  
-                  {/* Campo: Categoria */}
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Categoria</Label>
-                    <select
-                      id="category"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      value={newProduct.category}
-                      onChange={(e) => setNewProduct(prev => ({ ...prev, category: e.target.value }))}
-                    >
-                      <option value="">Selecione uma categoria</option>
-                      {categories.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
+
+          {/* Add Tab */}
+          <TabsContent value="add">
+            <div className="bg-surface-container-low p-8 rounded-3xl max-w-2xl mx-auto">
+              <h3 className="font-headline text-2xl font-bold text-foreground mb-6">Adicionar Produto</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="font-label text-xs uppercase tracking-widest text-muted-foreground">Nome</Label>
+                  <Input placeholder="Ex: Arroz integral" value={newProduct.name} onChange={(e) => setNewProduct(prev => ({ ...prev, name: e.target.value }))} className="rounded-xl bg-surface-container-highest border-none" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-label text-xs uppercase tracking-widest text-muted-foreground">Categoria</Label>
+                  <select className="flex h-10 w-full rounded-xl border-none bg-surface-container-highest px-3 py-2 text-sm" value={newProduct.category} onChange={(e) => setNewProduct(prev => ({ ...prev, category: e.target.value }))}>
+                    <option value="">Selecione</option>
+                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-label text-xs uppercase tracking-widest text-muted-foreground">Preço (R$)</Label>
+                  <Input type="number" step="0.01" placeholder="0.00" value={newProduct.price} onChange={(e) => setNewProduct(prev => ({ ...prev, price: e.target.value }))} className="rounded-xl bg-surface-container-highest border-none" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-label text-xs uppercase tracking-widest text-muted-foreground">Quantidade</Label>
+                  <div className="flex gap-2">
+                    <Input type="number" placeholder="1" value={newProduct.quantity} onChange={(e) => setNewProduct(prev => ({ ...prev, quantity: e.target.value }))} className="flex-1 rounded-xl bg-surface-container-highest border-none" />
+                    <select className="w-20 flex h-10 rounded-xl border-none bg-surface-container-highest px-3 py-2 text-sm" value={newProduct.unit} onChange={(e) => setNewProduct(prev => ({ ...prev, unit: e.target.value }))}>
+                      {units.map(u => <option key={u} value={u}>{u}</option>)}
                     </select>
                   </div>
-                  
-                  {/* Campo: Preço */}
-                  <div className="space-y-2">
-                    <Label htmlFor="price">Preço (R$)</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      step="0.01"
-                      placeholder="0.00"
-                      value={newProduct.price}
-                      onChange={(e) => setNewProduct(prev => ({ ...prev, price: e.target.value }))}
-                    />
-                  </div>
-                  
-                  {/* Campo: Quantidade e Unidade */}
-                  <div className="space-y-2">
-                    <Label htmlFor="quantity">Quantidade</Label>
-                    <div className="flex space-x-2">
-                      <Input
-                        id="quantity"
-                        type="number"
-                        placeholder="1"
-                        value={newProduct.quantity}
-                        onChange={(e) => setNewProduct(prev => ({ ...prev, quantity: e.target.value }))}
-                        className="flex-1"
-                      />
-                      <select
-                        className="w-20 flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        value={newProduct.unit}
-                        onChange={(e) => setNewProduct(prev => ({ ...prev, unit: e.target.value }))}
-                      >
-                        {units.map(unit => (
-                          <option key={unit} value={unit}>{unit}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                  
-                  {/* Campo: Emoji (opcional) */}
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="icon">Emoji (opcional)</Label>
-                    <Input
-                      id="icon"
-                      placeholder="Ex: 🍚, 🥛, 🍞..."
-                      value={newProduct.icon}
-                      onChange={(e) => setNewProduct(prev => ({ ...prev, icon: e.target.value }))}
-                    />
-                  </div>
                 </div>
-                
-                {/* Botão de adicionar */}
-                <Button onClick={handleAddProduct} className="w-full">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Adicionar Produto
-                </Button>
-              </CardContent>
-            </Card>
+                <div className="space-y-2 md:col-span-2">
+                  <Label className="font-label text-xs uppercase tracking-widest text-muted-foreground">Emoji</Label>
+                  <Input placeholder="Ex: 🍚, 🥛, 🍞..." value={newProduct.icon} onChange={(e) => setNewProduct(prev => ({ ...prev, icon: e.target.value }))} className="rounded-xl bg-surface-container-highest border-none" />
+                </div>
+              </div>
+              <button onClick={handleAddProduct} className="w-full mt-6 bg-primary-container hover:bg-primary text-white font-headline font-bold py-4 rounded-full shadow-lg shadow-primary/20 transition-all active:scale-[0.98]">
+                <Plus className="w-5 h-5 inline mr-2" />Adicionar Produto
+              </button>
+            </div>
           </TabsContent>
-          
+
+          {/* Scanner Tab */}
+          <TabsContent value="scanner">
+            <div className="bg-surface-container-low p-8 rounded-3xl max-w-2xl mx-auto">
+              <h3 className="font-headline text-2xl font-bold text-foreground mb-2">Scanner Inteligente</h3>
+              <p className="text-muted-foreground mb-6">Cole o texto da nota fiscal ou lista de compras para importar automaticamente ao Dashboard.</p>
+              <Textarea placeholder={"Exemplo:\nArroz 5 kg R$ 28,90\nFeijão 2 kg R$ 9,45"} value={scanText} onChange={(e) => setScanText(e.target.value)} className="min-h-[200px] rounded-xl bg-surface-container-highest border-none mb-4" />
+              <input type="file" ref={fileInputRef} accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) toast({ title: "Upload em desenvolvimento" }); }} />
+              <div className="flex gap-3">
+                <button onClick={handleScanProcess} disabled={isProcessing} className="flex-1 bg-primary-container hover:bg-primary text-white font-headline font-bold py-4 rounded-full shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50">
+                  {isProcessing ? "Processando..." : "Processar Texto"}
+                </button>
+                <button onClick={() => fileInputRef.current?.click()} className="px-6 py-4 bg-secondary hover:bg-secondary/80 text-white rounded-full font-semibold transition-colors">
+                  Upload
+                </button>
+              </div>
+            </div>
+          </TabsContent>
         </Tabs>
+
+        {/* Tonal Section */}
+        <section className="mt-20 p-8 bg-surface-container-low rounded-[2rem]">
+          <div className="flex flex-col md:flex-row gap-12 items-center">
+            <div className="md:w-1/2">
+              <h2 className="font-headline text-3xl md:text-4xl font-extrabold text-foreground leading-tight">Gestão Curatorial de Inventário</h2>
+              <p className="mt-6 text-muted-foreground leading-relaxed">
+                Nossa plataforma fornece uma visão editorial do seu negócio. Cada item é tratado com a importância que merece.
+              </p>
+            </div>
+            <div className="md:w-1/2 grid grid-cols-2 gap-4 w-full">
+              <div className="aspect-square bg-surface-container-highest rounded-2xl p-6 flex flex-col justify-center items-center text-center">
+                <span className="text-4xl text-primary-container mb-2">📦</span>
+                <p className="font-bold text-2xl">{products.length}</p>
+                <p className="text-xs uppercase font-label tracking-tighter text-muted-foreground">Produtos Ativos</p>
+              </div>
+              <div className="aspect-square bg-surface-container-highest rounded-2xl p-6 flex flex-col justify-center items-center text-center">
+                <span className="text-4xl text-tertiary-container mb-2">⚠️</span>
+                <p className="font-bold text-2xl">{products.filter(p => p.quantity <= 2).length}</p>
+                <p className="text-xs uppercase font-label tracking-tighter text-muted-foreground">Alertas Críticos</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Edit Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Editar Produto</DialogTitle><DialogDescription>Atualize as informações.</DialogDescription></DialogHeader>
+            {editingProduct && (
+              <div className="grid gap-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2"><Label>Nome</Label><Input value={editingProduct.name} onChange={(e) => setEditingProduct(p => p ? { ...p, name: e.target.value } : null)} /></div>
+                  <div className="space-y-2"><Label>Categoria</Label><select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={editingProduct.category} onChange={(e) => setEditingProduct(p => p ? { ...p, category: e.target.value } : null)}>{categories.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2"><Label>Preço</Label><Input type="number" step="0.01" value={editingProduct.price} onChange={(e) => setEditingProduct(p => p ? { ...p, price: parseFloat(e.target.value) || 0 } : null)} /></div>
+                  <div className="space-y-2"><Label>Qtd</Label><Input type="number" value={editingProduct.quantity} onChange={(e) => setEditingProduct(p => p ? { ...p, quantity: parseInt(e.target.value) || 0 } : null)} /></div>
+                  <div className="space-y-2"><Label>Un</Label><select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={editingProduct.unit} onChange={(e) => setEditingProduct(p => p ? { ...p, unit: e.target.value } : null)}>{units.map(u => <option key={u} value={u}>{u}</option>)}</select></div>
+                </div>
+                <div className="space-y-2"><Label>Emoji</Label><Input value={editingProduct.icon} onChange={(e) => setEditingProduct(p => p ? { ...p, icon: e.target.value } : null)} /></div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancelar</Button>
+              <Button onClick={handleSaveEditedProduct}>Salvar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );
