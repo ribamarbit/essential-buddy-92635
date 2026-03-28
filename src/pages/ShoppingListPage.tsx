@@ -1,303 +1,100 @@
-/**
- * =============================================================================
- * SHOPPINGLISTPAGE.TSX - Página da Lista de Compras
- * =============================================================================
- * 
- * Esta página exibe a lista de compras do usuário com todos os itens
- * adicionados através do Catálogo de Produtos ou Dashboard.
- * 
- * Funcionalidades:
- * - Visualizar itens da lista de compras
- * - Remover itens da lista
- * - Compartilhar lista (nativo ou copiar para clipboard)
- * - Finalizar compra (limpa a lista)
- * - Estatísticas (total de itens, urgentes, valor estimado)
- * 
- * Fluxo de dados:
- * - Carrega itens do localStorage (shoppingList)
- * - Sincroniza alterações de volta ao localStorage
- * 
- * =============================================================================
- */
-
-// Importações do React
 import { useState, useEffect } from "react";
-
-// Componentes
 import ShoppingList from "@/components/shopping-list";
-
-// Hooks
 import { useToast } from "@/hooks/use-toast";
-
-// Componentes de UI
-import { Button } from "@/components/ui/button";
-
-// Ícones
 import { Share2 } from "lucide-react";
 
-/**
- * Interface que define a estrutura de um item da lista de compras
- */
 interface ShoppingItem {
-  id: string;                              // Identificador único
-  name: string;                            // Nome do produto
-  icon: string;                            // Emoji representativo
-  priority: "urgent" | "warning" | "normal"; // Prioridade do item
-  estimatedPrice: number;                  // Preço estimado
+  id: string; name: string; icon: string; priority: "urgent" | "warning" | "normal"; estimatedPrice: number;
 }
 
-/**
- * Componente principal da página de Lista de Compras
- */
 const ShoppingListPage = () => {
-  // Hook para notificações toast
   const { toast } = useToast();
-  
-  // Estado da lista de compras
   const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([]);
 
-  /**
-   * Função para carregar a lista do localStorage
-   */
   const loadShoppingList = () => {
     try {
-      const storedList = localStorage.getItem('shoppingList');
-      if (storedList) {
-        const parsed = JSON.parse(storedList);
-        if (Array.isArray(parsed)) {
-          setShoppingList(parsed);
-        } else {
-          setShoppingList([]);
-        }
-      } else {
-        setShoppingList([]);
-      }
-    } catch {
-      console.error('Erro ao carregar lista de compras');
-      setShoppingList([]);
-    }
+      const stored = localStorage.getItem('shoppingList');
+      if (stored) { const parsed = JSON.parse(stored); setShoppingList(Array.isArray(parsed) ? parsed : []); }
+      else setShoppingList([]);
+    } catch { setShoppingList([]); }
   };
 
-  /**
-   * Carrega a lista na inicialização e quando há mudanças
-   * Escuta eventos customizados para sincronizar na mesma aba
-   */
   useEffect(() => {
-    // Carrega inicialmente
     loadShoppingList();
-
-    // Recarrega quando a janela ganha foco
-    const handleFocus = () => {
-      loadShoppingList();
-    };
-    
-    // Escuta mudanças no localStorage de outras abas
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key === 'shoppingList') {
-        loadShoppingList();
-      }
-    };
-    
-    // Escuta evento customizado para atualizações na mesma aba
-    const handleCustomUpdate = () => {
-      loadShoppingList();
-    };
-
-    // Polling a cada 1 segundo como fallback para garantir sincronização
-    const interval = setInterval(() => {
-      loadShoppingList();
-    }, 1000);
-
+    const handleFocus = () => loadShoppingList();
+    const handleStorage = (e: StorageEvent) => { if (e.key === 'shoppingList') loadShoppingList(); };
+    const handleCustom = () => loadShoppingList();
+    const interval = setInterval(loadShoppingList, 1000);
     window.addEventListener('focus', handleFocus);
     window.addEventListener('storage', handleStorage);
-    window.addEventListener('shoppingListUpdated', handleCustomUpdate);
-
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('focus', handleFocus);
-      window.removeEventListener('storage', handleStorage);
-      window.removeEventListener('shoppingListUpdated', handleCustomUpdate);
-    };
+    window.addEventListener('shoppingListUpdated', handleCustom);
+    return () => { clearInterval(interval); window.removeEventListener('focus', handleFocus); window.removeEventListener('storage', handleStorage); window.removeEventListener('shoppingListUpdated', handleCustom); };
   }, []);
 
-  /**
-   * Remove um item da lista de compras
-   * Atualiza tanto o estado quanto o localStorage
-   * 
-   * @param itemId - ID do item a ser removido
-   */
   const handleRemoveFromCart = (itemId: string) => {
     const item = shoppingList.find(i => i.id === itemId);
-    const updatedList = shoppingList.filter(i => i.id !== itemId);
-    setShoppingList(updatedList);
-    localStorage.setItem('shoppingList', JSON.stringify(updatedList));
-    
-    // Notifica o usuário
-    if (item) {
-      toast({
-        title: "Removido da lista",
-        description: `${item.name} foi removido da sua lista de compras.`
-      });
-    }
+    const updated = shoppingList.filter(i => i.id !== itemId);
+    setShoppingList(updated);
+    localStorage.setItem('shoppingList', JSON.stringify(updated));
+    if (item) toast({ title: "Removido", description: `${item.name} foi removido.` });
   };
 
-  /**
-   * Finaliza a compra
-   * Mostra o total e limpa a lista após 2 segundos
-   */
   const handleCheckout = () => {
-    // Verifica se há itens na lista
-    if (shoppingList.length === 0) {
-      toast({
-        title: "Lista vazia",
-        description: "Adicione itens à sua lista antes de finalizar.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Calcula o total
-    const total = shoppingList.reduce((sum, item) => sum + item.estimatedPrice, 0);
-    
-    // Notifica com resumo
-    toast({
-      title: "Lista de compras finalizada! ✅",
-      description: `Total: R$ ${total.toFixed(2)} • ${shoppingList.length} ${shoppingList.length === 1 ? 'item' : 'itens'}. Boa compra!`
-    });
-    
-    // Limpa a lista após 2 segundos
-    setTimeout(() => {
-      setShoppingList([]);
-      localStorage.setItem('shoppingList', JSON.stringify([]));
-      toast({
-        title: "Lista limpa!",
-        description: "Sua lista foi resetada. Adicione novos itens quando precisar."
-      });
-    }, 2000);
+    if (shoppingList.length === 0) { toast({ title: "Lista vazia", variant: "destructive" }); return; }
+    const total = shoppingList.reduce((s, i) => s + i.estimatedPrice, 0);
+    toast({ title: "Lista finalizada! ✅", description: `Total: R$ ${total.toFixed(2)} • ${shoppingList.length} itens.` });
+    setTimeout(() => { setShoppingList([]); localStorage.setItem('shoppingList', JSON.stringify([])); }, 2000);
   };
 
-  /**
-   * Compartilha a lista de compras
-   * Usa a Web Share API se disponível, senão copia para clipboard
-   */
   const handleShareList = async () => {
-    // Verifica se há itens
-    if (shoppingList.length === 0) {
-      toast({
-        title: "Lista vazia",
-        description: "Adicione itens à sua lista antes de compartilhar.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Formata o texto da lista
-    const listText = `🛒 Minha Lista de Compras - Concierge\n\n${shoppingList.map((item, index) => 
-      `${index + 1}. ${item.icon} ${item.name} - R$ ${item.estimatedPrice.toFixed(2)}`
-    ).join('\n')}\n\n💰 Total: R$ ${totalValue.toFixed(2)}`;
-
+    if (shoppingList.length === 0) { toast({ title: "Lista vazia", variant: "destructive" }); return; }
+    const text = `🛒 Lista de Compras\n\n${shoppingList.map((i, idx) => `${idx+1}. ${i.icon} ${i.name} - R$ ${i.estimatedPrice.toFixed(2)}`).join('\n')}\n\n💰 Total: R$ ${totalValue.toFixed(2)}`;
     try {
-      // Tenta usar a Web Share API (disponível em mobile)
-      if (navigator.share) {
-        await navigator.share({
-          title: 'Lista de Compras - Concierge',
-          text: listText
-        });
-        toast({
-          title: "Lista compartilhada! ✅",
-          description: "Sua lista foi compartilhada com sucesso."
-        });
-      } else {
-        // Fallback: copia para área de transferência
-        await navigator.clipboard.writeText(listText);
-        toast({
-          title: "Lista copiada! 📋",
-          description: "A lista foi copiada para a área de transferência."
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Erro ao compartilhar",
-        description: "Não foi possível compartilhar a lista.",
-        variant: "destructive"
-      });
-    }
+      if (navigator.share) { await navigator.share({ title: 'Lista de Compras', text }); }
+      else { await navigator.clipboard.writeText(text); toast({ title: "Lista copiada! 📋" }); }
+    } catch { toast({ title: "Erro ao compartilhar", variant: "destructive" }); }
   };
 
-  // Calcula estatísticas
-  const totalValue = shoppingList.reduce((sum, item) => sum + item.estimatedPrice, 0);
-  const urgentItems = shoppingList.filter(item => item.priority === "urgent").length;
+  const totalValue = shoppingList.reduce((s, i) => s + i.estimatedPrice, 0);
+  const urgentItems = shoppingList.filter(i => i.priority === "urgent").length;
 
-  // ==========================================================================
-  // RENDERIZAÇÃO DO COMPONENTE
-  // ==========================================================================
   return (
-    <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-8 space-y-8">
-        {/* ================================================================
-            CABEÇALHO DA PÁGINA
-            ================================================================ */}
-        <div className="text-center space-y-4">
-          <h1 className="text-3xl font-bold text-foreground">
-            Sua Lista de Compras
-          </h1>
-          {/* Subtítulo com estatísticas ou mensagem de lista vazia */}
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            {shoppingList.length > 0 
-              ? `${shoppingList.length} itens • Total estimado: R$ ${totalValue.toFixed(2)}`
-              : "Sua lista está vazia. Adicione itens do dashboard."
-            }
+    <div className="min-h-screen bg-background pb-32 md:pb-8">
+      <main className="max-w-7xl mx-auto px-6 pt-8 space-y-8">
+        {/* Header */}
+        <section>
+          <h2 className="text-4xl font-extrabold tracking-tight text-foreground mb-2 font-headline">Lista de Compras</h2>
+          <p className="text-muted-foreground font-medium">
+            {shoppingList.length > 0 ? `${shoppingList.length} itens • Total: R$ ${totalValue.toFixed(2)}` : "Sua lista está vazia."}
           </p>
-          {/* Botão de compartilhar (só aparece se houver itens) */}
           {shoppingList.length > 0 && (
-            <Button 
-              onClick={handleShareList}
-              variant="outline"
-              size="lg"
-              className="gap-2"
-            >
-              <Share2 className="w-4 h-4" />
-              Compartilhar Lista
-            </Button>
+            <button onClick={handleShareList} className="mt-4 px-6 py-2 bg-secondary hover:bg-secondary/80 text-white rounded-full font-semibold text-sm flex items-center gap-2 transition-colors">
+              <Share2 className="w-4 h-4" />Compartilhar
+            </button>
           )}
-        </div>
+        </section>
 
-        {/* ================================================================
-            CARDS DE ESTATÍSTICAS
-            Só aparecem se houver itens na lista
-            ================================================================ */}
+        {/* Stats */}
         {shoppingList.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Total de itens */}
-            <div className="bg-card border rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-foreground">{shoppingList.length}</div>
-              <div className="text-sm text-muted-foreground">Total de Itens</div>
+            <div className="bg-surface-container-highest/85 backdrop-blur-md p-6 rounded-3xl text-center">
+              <div className="text-3xl font-extrabold text-foreground">{shoppingList.length}</div>
+              <div className="text-sm text-muted-foreground font-label uppercase tracking-widest">Total de Itens</div>
             </div>
-            
-            {/* Itens urgentes */}
-            <div className="bg-card border rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-urgent">{urgentItems}</div>
-              <div className="text-sm text-muted-foreground">Itens Urgentes</div>
+            <div className="bg-tertiary-fixed p-6 rounded-3xl text-center">
+              <div className="text-3xl font-extrabold text-tertiary">{urgentItems}</div>
+              <div className="text-sm text-muted-foreground font-label uppercase tracking-widest">Urgentes</div>
             </div>
-            
-            {/* Valor estimado */}
-            <div className="bg-card border rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-foreground">R$ {totalValue.toFixed(2)}</div>
-              <div className="text-sm text-muted-foreground">Valor Estimado</div>
+            <div className="bg-primary-container p-6 rounded-3xl text-center text-white">
+              <div className="text-3xl font-extrabold">R$ {totalValue.toFixed(2)}</div>
+              <div className="text-sm opacity-80 font-label uppercase tracking-widest">Valor Estimado</div>
             </div>
           </div>
         )}
 
-        {/* ================================================================
-            COMPONENTE DA LISTA DE COMPRAS
-            Responsivo: maior em desktop, centralizado
-            ================================================================ */}
+        {/* List */}
         <div className="w-full max-w-2xl mx-auto">
-          <ShoppingList
-            items={shoppingList}
-            onRemoveItem={handleRemoveFromCart}
-            onCheckout={handleCheckout}
-          />
+          <ShoppingList items={shoppingList} onRemoveItem={handleRemoveFromCart} onCheckout={handleCheckout} />
         </div>
       </main>
     </div>

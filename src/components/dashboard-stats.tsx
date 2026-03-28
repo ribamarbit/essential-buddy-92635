@@ -1,117 +1,67 @@
-/**
- * =============================================================================
- * DASHBOARD-STATS.TSX - Cards de Estatísticas do Dashboard
- * =============================================================================
- * 
- * Componente que exibe os cards de estatísticas na página principal.
- * Mostra métricas importantes como:
- * - Itens acabando
- * - Média de dias para repor
- * - Itens na lista de compras
- * - Economia mensal estimada
- * 
- * =============================================================================
- */
-
-// Componente Card do design system
-import { Card } from "@/components/ui/card";
-
-// Ícones do Lucide
 import { TrendingDown, Clock, ShoppingCart, DollarSign } from "lucide-react";
 
-/**
- * Props do componente DashboardStats
- * Define a estrutura dos dados de estatísticas
- */
 interface DashboardStatsProps {
   stats: {
-    itemsRunningOut: number;  // Quantidade de itens acabando
-    avgDaysToRefill: number;  // Média de dias até repor
-    pendingItems: number;     // Itens na lista de compras
-    monthlySavings: number;   // Economia mensal em R$
+    itemsRunningOut: number;
+    avgDaysToRefill: number;
+    pendingItems: number;
+    monthlySavings: number;
   };
 }
 
-/**
- * Componente DashboardStats
- * 
- * Renderiza um grid de cards com estatísticas
- */
 const DashboardStats = ({ stats }: DashboardStatsProps) => {
-  /**
-   * Configuração dos cards de estatísticas
-   * Cada item define: ícone, label, valor, sufixo e cores
-   */
-  const statItems = [
+  const cards = [
     {
       icon: TrendingDown,
-      label: "Acabando",
-      value: stats.itemsRunningOut,
-      suffix: stats.itemsRunningOut === 1 ? "item" : "itens",
-      color: "text-urgent",      // Vermelho para urgência
-      bgColor: "bg-urgent-light"
+      label: "Itens acabando",
+      value: String(stats.itemsRunningOut),
+      subtitle: "Ações recomendadas hoje",
+      bg: "bg-surface-container-highest/85 backdrop-blur-md",
+      iconColor: "text-tertiary",
+      shadow: "shadow-tinted",
     },
     {
       icon: Clock,
-      label: "Média p/ repor",
-      value: stats.avgDaysToRefill,
-      suffix: "dias",
-      color: "text-primary",     // Cor primária
-      bgColor: "bg-primary/10"
-    },
-    {
-      icon: ShoppingCart,
-      label: "Na lista",
-      value: stats.pendingItems,
-      suffix: stats.pendingItems === 1 ? "item" : "itens",
-      color: "text-warning",     // Amarelo para atenção
-      bgColor: "bg-warning-light"
+      label: "Reposição média",
+      value: `${stats.avgDaysToRefill}d`,
+      subtitle: "Eficiência logística estável",
+      bg: "bg-primary-container",
+      iconColor: "text-white",
+      shadow: "shadow-[0_8px_24px_rgba(71,101,80,0.1)]",
+      textWhite: true,
     },
     {
       icon: DollarSign,
       label: "Economia mensal",
       value: `R$ ${stats.monthlySavings}`,
-      suffix: "",                // Sem sufixo (valor já formatado)
-      color: "text-success",     // Verde para positivo
-      bgColor: "bg-success-light"
-    }
+      subtitle: "Otimização de desperdício",
+      bg: "bg-secondary-container",
+      iconColor: "text-secondary",
+      shadow: "shadow-[0_8px_24px_rgba(181,141,114,0.1)]",
+    },
   ];
 
   return (
-    // Grid responsivo: 2 colunas em mobile, 4 em desktop
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      {statItems.map((item, index) => {
-        // Obtém o componente de ícone
-        const Icon = item.icon;
-        
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {cards.map((card, i) => {
+        const Icon = card.icon;
         return (
-          <Card 
-            key={index} 
-            className="p-4 shadow-card hover:shadow-elevated transition-all"
-          >
-            <div className="flex items-center gap-3">
-              {/* Ícone em container colorido */}
-              <div className={`w-10 h-10 rounded-lg ${item.bgColor} flex items-center justify-center`}>
-                <Icon className={`w-5 h-5 ${item.color}`} />
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                {/* Label da estatística */}
-                <p className="text-sm text-muted-foreground font-medium">
-                  {item.label}
-                </p>
-                {/* Valor e sufixo */}
-                <p className="text-lg font-bold text-card-foreground">
-                  {item.value} 
-                  {item.suffix && (
-                    <span className="text-sm font-normal text-muted-foreground ml-1">
-                      {item.suffix}
-                    </span>
-                  )}
-                </p>
-              </div>
+          <div key={i} className={`${card.bg} p-8 rounded-[2rem] flex flex-col justify-between ${card.shadow} border border-border/10`}>
+            <div>
+              <Icon className={`w-6 h-6 ${card.iconColor} mb-4`} />
+              <h3 className={`font-label text-sm uppercase tracking-[0.1em] ${card.textWhite ? 'text-white/80' : 'text-muted-foreground'}`}>
+                {card.label}
+              </h3>
             </div>
-          </Card>
+            <div className="mt-4">
+              <span className={`text-5xl font-extrabold tracking-tighter ${card.textWhite ? 'text-white' : 'text-foreground'}`}>
+                {card.value}
+              </span>
+              <p className={`text-sm mt-1 ${card.textWhite ? 'text-white/80' : 'text-muted-foreground'}`}>
+                {card.subtitle}
+              </p>
+            </div>
+          </div>
         );
       })}
     </div>
