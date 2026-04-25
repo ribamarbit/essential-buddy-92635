@@ -8,3 +8,12 @@ verify_jwt = false
 
 [functions.get-demo-credentials]
 verify_jwt = false
+
+[functions.ingest-pos-sale]
+verify_jwt = false
+
+[functions.generate-prediction]
+verify_jwt = true
+
+[functions.hard-delete-user]
+verify_jwt = true

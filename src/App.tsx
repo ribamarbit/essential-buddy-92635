@@ -32,6 +32,10 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 // Páginas da aplicação
 import Dashboard from "./pages/Dashboard";
+import Inventory from "./pages/Inventory";
+import Predictions from "./pages/Predictions";
+import Reports from "./pages/Reports";
+import Transparency from "./pages/Transparency";
 import AddItems from "./pages/AddItems";
 import ProductCatalog from "./pages/ProductCatalog";
 import ShoppingListPage from "./pages/ShoppingListPage";
@@ -242,26 +246,28 @@ const App = () => {
               {/* Redireciona login para home se já autenticado */}
               <Route path="/login" element={<Navigate to="/" replace />} />
               
-              {/* Dashboard - Página inicial com itens essenciais */}
+              {/* Dashboard - Concierge B2B */}
               <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              
-              {/* Cadastrar Itens - Adiciona itens ao Dashboard */}
+
+              {/* Inventário Ativo */}
+              <Route path="/inventory" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
+
+              {/* Sugestões da IA */}
+              <Route path="/predictions" element={<ProtectedRoute><Predictions /></ProtectedRoute>} />
+
+              {/* Relatórios e BI */}
+              <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+
+              {/* Painel LGPD - O que o Concierge sabe? */}
+              <Route path="/transparency" element={<ProtectedRoute><Transparency /></ProtectedRoute>} />
+
+              {/* Rotas legadas (mantidas para compatibilidade) */}
               <Route path="/add-items" element={<ProtectedRoute><AddItems /></ProtectedRoute>} />
-              
-              {/* Catálogo de Produtos - Gerencia produtos disponíveis */}
               <Route path="/products" element={<ProtectedRoute><ProductCatalog /></ProtectedRoute>} />
-              
-              {/* Lista de Compras - Itens a serem comprados */}
               <Route path="/shopping-list" element={<ProtectedRoute><ShoppingListPage /></ProtectedRoute>} />
-              
-              {/* Suporte - Central de ajuda */}
               <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
-              
-              {/* Perfil - Informações do usuário */}
               <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-              
-              {/* Rota 404 - Página não encontrada */}
-              {/* IMPORTANTE: Manter sempre por último */}
+
               <Route path="*" element={<ProtectedRoute><NotFound /></ProtectedRoute>} />
             </Routes>
             

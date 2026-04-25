@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, Settings, User, Home, Plus, ShoppingCart, Menu, Package, LogOut, Edit3, HelpCircle, HeadphonesIcon } from "lucide-react";
+import { Bell, Settings, User, Home, Plus, ShoppingCart, Menu, Package, LogOut, Edit3, HelpCircle, HeadphonesIcon, Sparkles, BarChart3, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from "@/components/ui/sheet";
@@ -46,18 +46,18 @@ const Header = ({ notificationCount = 0, onLogout, onShowGuide }: HeaderProps) =
 
   const navItems = [
     { path: "/", label: "Dashboard", icon: Home },
-    { path: "/add-items", label: "Cadastrar", icon: Plus },
-    { path: "/products", label: "Produtos", icon: Package },
-    { path: "/shopping-list", label: "Lista", icon: ShoppingCart },
-    { path: "/support", label: "Suporte", icon: HeadphonesIcon },
+    { path: "/inventory", label: "Inventário", icon: Package },
+    { path: "/predictions", label: "Sugestões IA", icon: Sparkles },
+    { path: "/reports", label: "Relatórios", icon: BarChart3 },
+    { path: "/transparency", label: "Transparência", icon: Eye },
     { path: "/perfil", label: "Perfil", icon: User },
   ];
 
   const bottomNavItems = [
     { path: "/", label: "Dashboard", icon: Home },
-    { path: "/products", label: "Produtos", icon: Package },
-    { path: "/shopping-list", label: "Lista", icon: ShoppingCart },
-    { path: "/perfil", label: "Perfil", icon: User },
+    { path: "/inventory", label: "Estoque", icon: Package },
+    { path: "/predictions", label: "IA", icon: Sparkles },
+    { path: "/reports", label: "BI", icon: BarChart3 },
   ];
 
   return (
