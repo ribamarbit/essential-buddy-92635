@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppRole = "admin" | "inventory_manager" | "buyer" | "logistics_operator" | "auditor";
+export type AppRole =
+  | "admin"
+  | "inventory_manager"
+  | "buyer"
+  | "logistics_operator"
+  | "auditor"
+  | "consumer"
+  | "merchant";
 
 export const ROLE_LABELS: Record<AppRole, string> = {
   admin: "Administrador",
@@ -9,6 +16,8 @@ export const ROLE_LABELS: Record<AppRole, string> = {
   buyer: "Comprador",
   logistics_operator: "Operador Logístico",
   auditor: "Auditor",
+  consumer: "Consumidor",
+  merchant: "Lojista / Estabelecimento",
 };
 
 export function useUserRoles() {
