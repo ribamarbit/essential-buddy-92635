@@ -100,12 +100,9 @@ const App = () => {
         setUser(session?.user ?? null);
         setIsValidating(false);
         
-        // Mostra guia para novos usuários que nunca viram antes
-        if (session?.user && !localStorage.getItem('hasSeenGuide')) {
-          setTimeout(() => {
-            setShowUserGuide(true);
-          }, 500);
-        }
+        // Manual do usuário não abre mais automaticamente.
+        // Acesso continua disponível pelo botão no header.
+
       }
     );
 
