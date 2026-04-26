@@ -67,19 +67,22 @@ const Transparency = () => {
   const toggleConsent = async (accepted: boolean) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
+
+    // Atualiza o estado IMEDIATAMENTE para que o switch e o card animem
+    // sem esperar o round-trip do banco.
+    setConsent({
+      accepted,
+      accepted_at: accepted ? new Date().toISOString() : undefined,
+      revoked_at: accepted ? undefined : new Date().toISOString(),
+    });
+
+    // Persistência em background — sem toast, a animação é o feedback.
     await supabase.from("operator_consents").insert({
       user_id: user.id, consent_type: CONSENT_TYPE, accepted,
       accepted_at: accepted ? new Date().toISOString() : null,
       revoked_at: accepted ? null : new Date().toISOString(),
       policy_version: POLICY_VERSION
     });
-    toast({
-      title: accepted ? "Consentimento ativado ✅" : "Consentimento revogado",
-      description: accepted
-        ? "Seu monitoramento de produtividade está ativo agora."
-        : "Seu monitoramento de produtividade foi desativado.",
-    });
-    load();
   };
 
   const handleHardDelete = async () => {
