@@ -10,8 +10,37 @@ import { Eye, Shield, ShieldOff } from "lucide-react";
 const POLICY_VERSION = "2025-04-25-v1";
 const CONSENT_TYPE = "operator_productivity_monitoring";
 
-const USED = ["SKU", "Categoria do produto", "Quantidade vendida", "Data e hora da venda", "Estoque atual", "Sazonalidade semanal/mensal", "Clima agregado por região", "Lead time do fornecedor"];
-const NOT_USED = ["CPF do cliente", "Nome do cliente", "Telefone", "E-mail", "Dados de pagamento", "Identificadores de fidelidade", "Geolocalização contínua", "Biometria"];
+const USED = [
+  "SKU e código de barras do produto",
+  "Categoria do produto",
+  "Quantidade vendida (agregada)",
+  "Data e hora da venda",
+  "Estoque atual e mínimo por SKU",
+  "Lotes e datas de validade",
+  "Movimentações de estoque (entrada, saída, ajuste, perda)",
+  "Sazonalidade semanal e mensal",
+  "Clima agregado por região",
+  "Lead time do fornecedor",
+  "Decisões humanas sobre sugestões da IA (aprovou/editou/rejeitou)",
+  "Consentimentos do operador (versão da política e data)",
+  "E-mail e nome do operador (para login e auditoria)",
+  "Papéis atribuídos ao operador (RBAC)",
+  "CPF do cliente para nota fiscal — criptografado AES-256, opcional, nunca retornado pela API",
+  "Endereço de entrega do pedido (quando aplicável ao delivery)",
+  "Logs de auditoria de ações críticas (retenção 24 meses)",
+];
+const NOT_USED = [
+  "CPF do cliente para fins analíticos ou de IA",
+  "Nome, telefone ou e-mail do consumidor final do PDV",
+  "Dados de pagamento (cartão, PIX, conta bancária)",
+  "Identificadores de programa de fidelidade",
+  "Geolocalização contínua do operador ou do cliente",
+  "Biometria (facial, digital, voz)",
+  "Histórico de navegação fora do app",
+  "Cookies de terceiros para rastreamento publicitário",
+  "Conteúdo de mensagens privadas",
+  "Dados de menores de idade",
+];
 
 const Transparency = () => {
   const { toast } = useToast();
