@@ -44,7 +44,12 @@ const Transparency = () => {
       revoked_at: accepted ? null : new Date().toISOString(),
       policy_version: POLICY_VERSION
     });
-    toast({ title: accepted ? "Consentimento registrado ✅" : "Consentimento revogado" });
+    toast({
+      title: accepted ? "Consentimento ativado ✅" : "Consentimento revogado",
+      description: accepted
+        ? "Seu monitoramento de produtividade está ativo agora."
+        : "Seu monitoramento de produtividade foi desativado.",
+    });
     load();
   };
 
@@ -87,16 +92,69 @@ const Transparency = () => {
         </section>
 
         <Card>
-          <CardHeader><CardTitle>Consentimento de monitoramento de produtividade</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">Permite registrar tempo de contagem, divergências, ajustes e horários de sincronização. Não inclui geolocalização contínua, biometria ou dados pessoais.</p>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">{consent?.accepted ? "Ativo" : "Não autorizado"}</p>
-                {consent?.accepted_at && <p className="text-xs text-muted-foreground">desde {new Date(consent.accepted_at).toLocaleString("pt-BR")} · política {POLICY_VERSION}</p>}
+          <CardHeader>
+            <CardTitle id="consent-title">Consentimento de monitoramento de produtividade</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p id="consent-desc" className="text-sm text-muted-foreground">
+              Permite registrar tempo de contagem, divergências, ajustes e horários de sincronização. Não inclui geolocalização contínua, biometria ou dados pessoais.
+            </p>
+
+            <div
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              className={`flex items-center justify-between gap-4 rounded-lg border-2 p-4 transition-all duration-500 ease-out ${
+                consent?.accepted
+                  ? "border-primary bg-primary/10 shadow-[0_0_0_4px_hsl(var(--primary)/0.08)]"
+                  : "border-muted-foreground/20 bg-muted/40"
+              }`}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div
+                  aria-hidden="true"
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all duration-500 ${
+                    consent?.accepted
+                      ? "bg-primary text-primary-foreground scale-100 rotate-0"
+                      : "bg-muted text-muted-foreground scale-90 -rotate-12"
+                  }`}
+                >
+                  {consent?.accepted ? <Shield className="w-5 h-5" /> : <ShieldOff className="w-5 h-5" />}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold flex items-center gap-2">
+                    <span
+                      aria-hidden="true"
+                      className={`inline-block h-2 w-2 rounded-full transition-all duration-500 ${
+                        consent?.accepted ? "bg-primary animate-pulse" : "bg-muted-foreground/40"
+                      }`}
+                    />
+                    {consent?.accepted ? "Monitoramento ativo" : "Monitoramento desativado"}
+                  </p>
+                  {consent?.accepted_at && consent?.accepted && (
+                    <p className="text-xs text-muted-foreground truncate">
+                      desde {new Date(consent.accepted_at).toLocaleString("pt-BR")} · política {POLICY_VERSION}
+                    </p>
+                  )}
+                  {!consent?.accepted && (
+                    <p className="text-xs text-muted-foreground">Nenhum dado de produtividade está sendo coletado.</p>
+                  )}
+                </div>
               </div>
-              <Switch checked={!!consent?.accepted} onCheckedChange={toggleConsent} />
+
+              <Switch
+                checked={!!consent?.accepted}
+                onCheckedChange={toggleConsent}
+                aria-labelledby="consent-title"
+                aria-describedby="consent-desc consent-state"
+                className="scale-125 data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted-foreground/30 transition-all"
+              />
             </div>
+            <span id="consent-state" className="sr-only">
+              {consent?.accepted
+                ? "Consentimento de monitoramento de produtividade ATIVO. Acione o interruptor para revogar."
+                : "Consentimento de monitoramento de produtividade INATIVO. Acione o interruptor para autorizar."}
+            </span>
           </CardContent>
         </Card>
 
