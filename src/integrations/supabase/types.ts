@@ -127,6 +127,36 @@ export type Database = {
           },
         ]
       }
+      customer_invoice_data: {
+        Row: {
+          cpf_encrypted: string
+          cpf_hash: string
+          cpf_last_two: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cpf_encrypted: string
+          cpf_hash: string
+          cpf_last_two: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cpf_encrypted?: string
+          cpf_hash?: string
+          cpf_last_two?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       demand_predictions: {
         Row: {
           confidence_score: number
@@ -479,6 +509,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _cpf_encryption_key: { Args: never; Returns: string }
+      _sanitize_cpf: { Args: { _cpf: string }; Returns: string }
+      delete_invoice_cpf: { Args: never; Returns: undefined }
+      generate_invoice_payload: { Args: { _order_id: string }; Returns: Json }
+      get_masked_cpf: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -486,6 +521,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      set_invoice_cpf: { Args: { _cpf: string }; Returns: undefined }
     }
     Enums: {
       app_role:
