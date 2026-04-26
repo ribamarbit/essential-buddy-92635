@@ -2,43 +2,93 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ShoppingBag, Sparkles, TrendingDown, Repeat } from "lucide-react";
 import { useUserRoles } from "@/hooks/useUserRoles";
+
+interface ShoppingItem {
+  id: string;
+  name: string;
+  estimatedPrice?: number;
+  category?: string;
+}
 
 const Reports = () => {
   const { canViewAuditLogs } = useUserRoles();
-  const [stats, setStats] = useState({ totalSkus: 0, totalSales28d: 0, predictions: 0, approvedRate: 0, losses: 0, gmroi: 0 });
+  const [stats, setStats] = useState({
+    itemsSearched: 0,
+    estimatedTotal: 0,
+    promoSuggestions: 0,
+    estimatedSavings: 0,
+    recurringItems: 0,
+  });
+  const [topCategories, setTopCategories] = useState<{ name: string; count: number }[]>([]);
   const [logs, setLogs] = useState<any[]>([]);
 
   useEffect(() => {
     (async () => {
-      const { count: skus } = await supabase.from("products").select("*", { count: "exact", head: true });
-      const since = new Date(Date.now() - 28 * 86400000).toISOString();
-      const { data: sales } = await supabase.from("pos_sales_clean").select("total_value, quantity").gte("sold_at", since);
-      const totalSales = (sales ?? []).reduce((s, r) => s + Number(r.total_value), 0);
+      // Pesquisas / lista do cliente (localStorage)
+      let list: ShoppingItem[] = [];
+      try {
+        const stored = localStorage.getItem("shoppingList");
+        const parsed = stored ? JSON.parse(stored) : [];
+        list = Array.isArray(parsed) ? parsed : [];
+      } catch { list = []; }
 
-      const { data: preds } = await supabase.from("demand_predictions").select("status");
-      const approved = (preds ?? []).filter(p => p.status === "approved").length;
-      const total = preds?.length ?? 0;
+      const estimatedTotal = list.reduce((s, i) => s + Number(i.estimatedPrice ?? 0), 0);
 
-      const { data: lossMov } = await supabase.from("inventory_movements").select("quantity").eq("movement_type", "loss");
-      const losses = (lossMov ?? []).reduce((s, r) => s + Math.abs(Number(r.quantity)), 0);
+      // Categorias mais pesquisadas
+      const catMap = new Map<string, number>();
+      list.forEach(i => {
+        const c = (i.category ?? "geral").toLowerCase();
+        catMap.set(c, (catMap.get(c) ?? 0) + 1);
+      });
+      const cats = Array.from(catMap.entries())
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+      setTopCategories(cats);
 
-      // GMROI simplificado: vendas / custo médio do estoque (proxy: total de unidades em estoque)
-      const { data: inv } = await supabase.from("inventory_balances").select("current_quantity");
-      const stockUnits = (inv ?? []).reduce((s, r) => s + Number(r.current_quantity), 0);
-      const gmroi = stockUnits > 0 ? totalSales / stockUnits : 0;
+      // Itens recorrentes (aparecem em pesquisas frequentes — proxy: nome repetido)
+      const nameCount = new Map<string, number>();
+      list.forEach(i => {
+        const k = i.name.toLowerCase().trim();
+        nameCount.set(k, (nameCount.get(k) ?? 0) + 1);
+      });
+      const recurring = Array.from(nameCount.values()).filter(v => v > 1).length;
+
+      // Recomendações de IA (promoções) geradas para este usuário
+      const { data: { user } } = await supabase.auth.getUser();
+      let promoCount = 0;
+      let savings = 0;
+      if (user) {
+        const { data: preds } = await supabase
+          .from("demand_predictions")
+          .select("explanation, confidence_score")
+          .eq("store_id", user.id)
+          .ilike("explanation", "[Promoção]%");
+        promoCount = preds?.length ?? 0;
+        // Extrai % de desconto do texto "[Promoção] ... (~XX% off)"
+        savings = (preds ?? []).reduce((sum, p: any) => {
+          const m = /~(\d+(?:\.\d+)?)%/.exec(p.explanation ?? "");
+          const pct = m ? Number(m[1]) : 0;
+          return sum + pct;
+        }, 0);
+      }
 
       setStats({
-        totalSkus: skus ?? 0,
-        totalSales28d: totalSales,
-        predictions: total,
-        approvedRate: total > 0 ? (approved / total) * 100 : 0,
-        losses,
-        gmroi
+        itemsSearched: list.length,
+        estimatedTotal,
+        promoSuggestions: promoCount,
+        estimatedSavings: savings,
+        recurringItems: recurring,
       });
 
       if (canViewAuditLogs) {
-        const { data: l } = await supabase.from("audit_logs").select("*").order("created_at", { ascending: false }).limit(20);
+        const { data: l } = await supabase
+          .from("audit_logs")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(20);
         setLogs(l ?? []);
       }
     })();
@@ -48,30 +98,105 @@ const Reports = () => {
     <div className="min-h-screen bg-background pb-32 md:pb-8">
       <main className="max-w-7xl mx-auto px-6 pt-8 space-y-6">
         <header>
-          <h2 className="text-3xl font-extrabold font-headline">Relatórios &amp; BI</h2>
-          <p className="text-muted-foreground">Indicadores agregados — sem dados pessoais de consumidores.</p>
+          <h2 className="text-3xl font-extrabold font-headline">Meu painel de compras</h2>
+          <p className="text-muted-foreground">
+            Resumo das suas pesquisas, recomendações da IA e oportunidades de economia.
+          </p>
         </header>
 
         <section className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <Card><CardHeader><CardTitle className="text-sm text-muted-foreground">SKUs cadastrados</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{stats.totalSkus}</p></CardContent></Card>
-          <Card><CardHeader><CardTitle className="text-sm text-muted-foreground">Vendas 28d (R$)</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{stats.totalSales28d.toFixed(2)}</p></CardContent></Card>
-          <Card><CardHeader><CardTitle className="text-sm text-muted-foreground">Sugestões IA</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{stats.predictions}</p></CardContent></Card>
-          <Card><CardHeader><CardTitle className="text-sm text-muted-foreground">Taxa de aprovação</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{stats.approvedRate.toFixed(0)}%</p></CardContent></Card>
-          <Card><CardHeader><CardTitle className="text-sm text-muted-foreground">Perdas (un.)</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{stats.losses.toFixed(0)}</p></CardContent></Card>
-          <Card><CardHeader><CardTitle className="text-sm text-muted-foreground">GMROI proxy</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{stats.gmroi.toFixed(2)}</p></CardContent></Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+                <ShoppingBag className="w-4 h-4" /> Itens pesquisados
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">{stats.itemsSearched}</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm text-muted-foreground">Total estimado da lista</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">R$ {stats.estimatedTotal.toFixed(2)}</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+                <Sparkles className="w-4 h-4" /> Recomendações da IA
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">{stats.promoSuggestions}</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-primary/10">
+            <CardHeader>
+              <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+                <TrendingDown className="w-4 h-4" /> Economia potencial acumulada
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-primary">~{stats.estimatedSavings.toFixed(0)}%</p>
+              <p className="text-xs text-muted-foreground mt-1">Soma dos descontos sugeridos</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+                <Repeat className="w-4 h-4" /> Itens recorrentes
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">{stats.recurringItems}</p>
+              <p className="text-xs text-muted-foreground mt-1">Pesquisados mais de uma vez</p>
+            </CardContent>
+          </Card>
         </section>
+
+        {topCategories.length > 0 && (
+          <section>
+            <h3 className="text-2xl font-bold font-headline mb-3">Categorias que você mais pesquisa</h3>
+            <div className="flex flex-wrap gap-2">
+              {topCategories.map(c => (
+                <Badge key={c.name} variant="secondary" className="text-sm py-1.5 px-3 capitalize">
+                  {c.name} · {c.count}
+                </Badge>
+              ))}
+            </div>
+          </section>
+        )}
 
         {canViewAuditLogs && (
           <section>
-            <h3 className="text-2xl font-bold font-headline mb-3">Logs de auditoria <Badge variant="outline" className="ml-2 text-xs">Retenção 24 meses</Badge></h3>
+            <h3 className="text-2xl font-bold font-headline mb-3">
+              Logs de auditoria
+              <Badge variant="outline" className="ml-2 text-xs">Retenção 24 meses</Badge>
+            </h3>
             <div className="space-y-2">
-              {logs.length === 0 ? <p className="text-muted-foreground">Sem registros recentes.</p> : logs.map(l => (
-                <Card key={l.id}><CardContent className="py-3 text-sm">
-                  <div className="flex justify-between gap-2">
-                    <p><span className="font-mono text-xs bg-muted px-2 py-0.5 rounded mr-2">{l.action}</span>{l.readable_description}</p>
-                    <p className="text-xs text-muted-foreground whitespace-nowrap">{new Date(l.created_at).toLocaleString("pt-BR")}</p>
-                  </div>
-                </CardContent></Card>
+              {logs.length === 0 ? (
+                <p className="text-muted-foreground">Sem registros recentes.</p>
+              ) : logs.map(l => (
+                <Card key={l.id}>
+                  <CardContent className="py-3 text-sm">
+                    <div className="flex justify-between gap-2">
+                      <p>
+                        <span className="font-mono text-xs bg-muted px-2 py-0.5 rounded mr-2">{l.action}</span>
+                        {l.readable_description}
+                      </p>
+                      <p className="text-xs text-muted-foreground whitespace-nowrap">
+                        {new Date(l.created_at).toLocaleString("pt-BR")}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           </section>
