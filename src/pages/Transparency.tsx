@@ -44,7 +44,12 @@ const Transparency = () => {
       revoked_at: accepted ? null : new Date().toISOString(),
       policy_version: POLICY_VERSION
     });
-    toast({ title: accepted ? "Consentimento registrado ✅" : "Consentimento revogado" });
+    toast({
+      title: accepted ? "Consentimento ativado ✅" : "Consentimento revogado",
+      description: accepted
+        ? "Seu monitoramento de produtividade está ativo agora."
+        : "Seu monitoramento de produtividade foi desativado.",
+    });
     load();
   };
 
