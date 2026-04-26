@@ -136,10 +136,10 @@ const Transparency = () => {
               role="status"
               aria-live="polite"
               aria-atomic="true"
-              className={`flex items-center justify-between gap-4 rounded-lg border-2 p-4 transition-all duration-500 ease-out ${
+              className={`flex items-center justify-between gap-4 rounded-lg border-2 p-4 transition-all duration-700 ease-out ${
                 consent?.accepted
-                  ? "border-primary bg-primary/10 shadow-[0_0_0_4px_hsl(var(--primary)/0.08)]"
-                  : "border-muted-foreground/20 bg-muted/40"
+                  ? "border-primary bg-primary/20 shadow-[0_0_24px_-4px_hsl(var(--primary)/0.6)] brightness-110"
+                  : "border-muted-foreground/20 bg-muted/40 brightness-90"
               }`}
             >
               <div className="flex items-center gap-3 min-w-0">
